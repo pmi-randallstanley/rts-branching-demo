@@ -183,6 +183,42 @@ BEGIN
         FROM    tmp_ak_insert
         ON DUPLICATE KEY UPDATE last_user_id = 1234
         ;
+
+        insert  sam_test_section (
+            test_id
+            ,section_num
+            ,question_count
+            ,section_label
+            ,gui_edit_section_label_flag
+            ,last_user_id
+            ,create_timestamp
+        )
+
+        select  dt.test_id
+            ,dt.section_num
+            ,dt.question_count
+            ,cast(dt.section_num as char(10))
+            ,0
+            ,1234
+            ,now()
+
+        from    (
+                    select  ak.test_id, ak.section_num, count(ak.test_question_id) as question_count
+                    
+                    from    tmp_test_list as tl
+                    join    sam_answer_key as ak
+                            on      ak.test_id = tl.test_id
+                    group by ak.test_id, ak.section_num
+                ) as dt
+        left join   sam_test_section as tar
+                on      dt.test_id = tar.test_id
+                and     dt.section_num = tar.section_num
+                and     tar.gui_edit_section_label_flag = 1
+        where   tar.section_num is null
+        on duplicate key update question_count = values(question_count)
+            ,section_label = values(section_label)
+            ,last_user_id = values(last_user_id)
+        ;
         
         #################
         ## Update Log
