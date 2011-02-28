@@ -39,6 +39,26 @@ BEGIN
     group by rsg.accessor_id, rsg.ayp_group_id, rsg.grade_level_id, rsg.school_year_id
     ;
 
+    # school level.  Need to pick up school, group, grade level that have entries in ayp
+    #   enrollment, but not in current enrollment.
+    insert rpt_nclb_group_enroll_acc_grade (accessor_id, ayp_group_id, grade_level_id, school_year_id
+        ,curr_enroll_count, ayp_enroll_count, last_user_id, create_timestamp)
+ 
+    select  rsag.accessor_id, rsag.ayp_group_id, rsag.grade_level_id, rsag.school_year_id
+            , 0, 0, 1234, now()
+    from        rpt_student_ayp_group rsag
+    join        c_school_year as sy
+                on      rsag.school_year_id = sy.school_year_id
+                and     sy.active_flag = 1
+    left join   rpt_nclb_group_enroll_acc_grade rpt
+                on      rsag.accessor_id = rpt.accessor_id
+                and     rsag.grade_level_id = rpt.grade_level_id
+                and     rsag.ayp_group_id = rpt.ayp_group_id
+    where       rpt.accessor_id is null
+                and     rsag.accessor_id != @client_id   # This is needed b/c some districts have client id in rpt_student_ayp_group, and district insert below will bomb on dup key.
+    group by    rsag.accessor_id, rsag.ayp_group_id,rsag.grade_level_id,rsag.school_year_id  
+    ;
+
     update  rpt_nclb_group_enroll_acc_grade as eag
     join    (
                 select  rsg.accessor_id, rsg.ayp_group_id, rsg.grade_level_id, rsg.school_year_id
@@ -93,6 +113,44 @@ BEGIN
         ON   sub.ayp_test_type_id = sub.ayp_test_type_id
         AND  atty.ayp_reporting_flag = 1
     GROUP BY sag.accessor_id, sub.ayp_subject_id, sag.ayp_group_id, sag.grade_level_id;
+
+    # School level.  Need to pick up school, group, grade level and subject  that have entries in ayp
+    #   enrollment, but not in current enrollment.
+    insert rpt_nclb_group_results_acc_grade (ayp_group_id, accessor_id, grade_level_id, ayp_subject_id, last_user_id, ayp_year_id)
+    SELECT rsag.ayp_group_id
+            ,rsag.accessor_id
+            ,rsag.grade_level_id
+            ,sub.ayp_subject_id
+            ,1234
+            ,min(sy.school_year_id) as ayp_year_id
+    FROM      rpt_student_ayp_group AS rsag
+    JOIN      c_ayp_group ag
+              ON        ag.ayp_group_id = rsag.ayp_group_id
+              AND       ayp_accel_flag = 1
+    JOIN      c_school_year sy
+              ON        sy.active_flag = 1
+    JOIN      c_student_year csy
+              ON        csy.school_year_id = sy.school_year_id
+              AND       csy.student_id = rsag.student_id
+              AND       csy.active_flag = 1
+    JOIN      c_student_school_list AS sschl
+              ON        sschl.student_id = csy.student_id
+              AND       sschl.school_year_id = csy.school_year_id
+              AND       sschl.enrolled_school_flag = 1
+              AND       sschl.active_flag = 1
+    JOIN      c_ayp_subject sub
+    JOIN      c_ayp_test_type_year atty
+              ON        sub.ayp_test_type_id = sub.ayp_test_type_id
+              AND       atty.ayp_reporting_flag = 1
+    LEFT JOIN rpt_nclb_group_results_acc_grade rpt
+              ON        rsag.accessor_id = rpt.accessor_id
+              AND       rsag.grade_level_id = rpt.grade_level_id
+              AND       rsag.ayp_group_id = rpt.ayp_group_id
+              AND       sub.ayp_subject_id = rpt.ayp_subject_id
+    WHERE     rpt.accessor_id is null
+    GROUP BY  rsag.accessor_id, sub.ayp_subject_id, rsag.ayp_group_id, rsag.grade_level_id
+    on duplicate key update last_user_id = values(last_user_id)
+    ;
     
     # district level
     insert rpt_nclb_group_results_acc_grade (ayp_group_id, accessor_id, grade_level_id, ayp_subject_id, last_user_id, ayp_year_id)
@@ -121,8 +179,48 @@ BEGIN
     JOIN   c_ayp_test_type_year atty
         ON   sub.ayp_test_type_id = sub.ayp_test_type_id
         AND  atty.ayp_reporting_flag = 1
-    GROUP BY sub.ayp_subject_id, sag.ayp_group_id, sag.grade_level_id;
+    GROUP BY sub.ayp_subject_id, sag.ayp_group_id, sag.grade_level_id
+    on duplicate key update last_user_id = values(last_user_id)
+    ;
 
+
+    # District level.  Need to pick up client, group, grade level and subject that have entries in ayp
+    #   enrollment, but not in current enrollment.
+    insert rpt_nclb_group_results_acc_grade (ayp_group_id, accessor_id, grade_level_id, ayp_subject_id, last_user_id, ayp_year_id)
+    SELECT rsag.ayp_group_id
+            ,@client_id
+            ,rsag.grade_level_id
+            ,sub.ayp_subject_id
+            ,1234
+            ,min(sy.school_year_id) as ayp_year_id
+    FROM      rpt_student_ayp_group AS rsag
+    JOIN      c_ayp_group ag
+              ON        ag.ayp_group_id = rsag.ayp_group_id
+              AND       ayp_accel_flag = 1
+    JOIN      c_school_year sy
+              ON        sy.active_flag = 1
+    JOIN      c_student_year csy
+              ON        csy.school_year_id = sy.school_year_id
+              AND       csy.student_id = rsag.student_id
+              AND       csy.active_flag = 1
+    JOIN      c_student_school_list AS sschl
+              ON        sschl.student_id = csy.student_id
+              AND       sschl.school_year_id = csy.school_year_id
+              AND       sschl.enrolled_school_flag = 1
+              AND       sschl.active_flag = 1
+    JOIN      c_ayp_subject sub
+    JOIN      c_ayp_test_type_year atty
+              ON        sub.ayp_test_type_id = sub.ayp_test_type_id
+              AND       atty.ayp_reporting_flag = 1
+    LEFT JOIN rpt_nclb_group_results_acc_grade rpt
+              ON        @client_id = rpt.accessor_id
+              AND       rsag.grade_level_id = rpt.grade_level_id
+              AND       rsag.ayp_group_id = rpt.ayp_group_id
+              AND       sub.ayp_subject_id = rpt.ayp_subject_id
+    WHERE     rpt.accessor_id is null
+    GROUP BY  sub.ayp_subject_id, rsag.ayp_group_id, rsag.grade_level_id
+    on duplicate key update last_user_id = values(last_user_id)
+    ;
 
     ##################
     ## Lagging Curr ##
