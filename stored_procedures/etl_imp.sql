@@ -623,6 +623,23 @@ SQL SECURITY INVOKER
         end if;    
 
         ################################
+        ## Run etl_color_smi_quantile ##
+        ################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_color_smi_quantile');
+    
+        if  @upload_id > 1 then 
+            select 'New Color File - SMI Quantile' as Uploader_Color_SMI_Quantile, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_smi_quantile()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_color_smi_quantile();
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_smi_quantile()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Color File - SMI Quantile' as Uploader_Color_SMI_Quantile, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No Color File - SMI Quantile' as Uploader_Color_SMI_Quantile;
+        end if;    
+
+        ################################
         ## Run etl_imp_ayp_enrollment ##
         ################################
         call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_ayp_enrollment');
@@ -1003,6 +1020,39 @@ SQL SECURITY INVOKER
             ELSE SELECT 'No Scan Files - External' AS Uploader_Scan_File_external;
         END IF;        
 
+        ################################
+        ## Run etl_bm_load_intel_test ##
+        ################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_intel_assess_test');
+    
+        if  @upload_id > 1 then 
+            select 'New Intel Assess Test File' as Upload_Custom_User_Role, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_bm_load_intel_test()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_bm_load_intel_test();
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_bm_load_intel_test()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Intel Assess Test File' as Upload_Custom_User_Role, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No Intel Assess Test File' as Upload_Custom_User_Role;
+        end if;    
+
+        ##############################
+        ## Run etl_bm_load_intel_ak ##
+        ##############################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_intel_assess_ak');
+    
+        if  @upload_id > 1 then 
+            select 'New Intel Assess Ak File' as Upload_Custom_User_Role, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_bm_load_intel_ak()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_bm_load_intel_ak();
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_bm_load_intel_ak()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Intel Assess Ak File' as Upload_Custom_User_Role, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No Intel Assess Ak File' as Upload_Custom_User_Role;
+        end if;    
 
         #######################################
         ## Internal Scan Results - Pre-Pivoted
@@ -1129,6 +1179,23 @@ SQL SECURITY INVOKER
                 SELECT 'New DIBELS FORF File' AS Uploader_FORF, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
             ELSE SELECT 'No DIBELS FORF' AS Uploader_FORF;
         END IF; 
+
+        ####################################
+        ## Run etl_rpt_dibels_next_scores ##
+        ####################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_dibels_next');
+    
+        if  @upload_id > 1 then 
+            select 'New File - DIBELS Next' as DIBELS_Next_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_rpt_dibels_next_scores()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_rpt_dibels_next_scores();
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_rpt_dibels_next_scores()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New File - DIBELS Next' as DIBELS_Next_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No File - DIBELS Next' as DIBELS_Next_Scores;
+        end if;    
  
         ##############################
         ## Lexile Scores
@@ -1148,6 +1215,24 @@ SQL SECURITY INVOKER
                 SELECT 'New PM Lexile Scores' AS PM_Lexile_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
             ELSE SELECT 'No PM Lexile Scores' AS PM_Lexile_Scores;
         END IF;        
+
+        ####################################
+        ## Run etl_pm_smi_quantile_scores ##
+        ####################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_smi_quantile');
+    
+        if  @upload_id > 1 then 
+            select 'New PM File - SMI Quantile' as PM_SMI_Quantile_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_pm_smi_quantile_scores()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_pm_smi_quantile_scores();
+            set v_etl_rpt_flag = 1;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_pm_smi_quantile_scores()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New PM File - SMI Quantile' as PM_SMI_Quantile_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No PM File - SMI Quantile' as PM_SMI_Quantile_Scores;
+        end if;    
 
         ##############################
         ## IRI Scores
