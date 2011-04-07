@@ -476,8 +476,26 @@ SQL SECURITY INVOKER
                 SELECT 'New DIBELS Color File' AS Uploader_Color_DIBELS, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
             ELSE SELECT 'No DIBELS Color File' AS Uploader_Color_DIBELS;
         END IF; 
-            
-            
+
+        ##############################
+        ## Run etl_color_snap   ##
+        ##############################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_color_snap');
+    
+        IF  @upload_id > 1
+            THEN 
+                SELECT 'New SNAP Color File' AS Uploader_Color_SNAP, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+                    INSERT tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+                    SELECT @etl_imp_id, @client_id, 'etl_color_snap()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+                        call etl_color_snap();
+                        SET v_etl_rpt_flag = 1;
+                        SET v_etl_pm_flag = 1;
+                    INSERT tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+                    SELECT @etl_imp_id, @client_id, 'etl_color_snap()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+                SELECT 'New SNAP Color File' AS Uploader_Color_SNAP, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+            ELSE SELECT 'No SNAP Color File' AS Uploader_Color_SNAP;
+        END IF; 
+
         ##############################
         ## Run etl_color_lexile ##
         ##############################
