@@ -11,7 +11,7 @@ drop procedure if exists etl_hst_load_mn_mca_ii//
 create definer=`dbadmin`@`localhost` procedure etl_hst_load_mn_mca_ii()
 contains sql
 sql security invoker
-comment '$Rev: 9335 $ $Date: 2010-10-03 14:10:23 -0400 (Sun, 03 Oct 2010) $'
+comment '$Rev:  $'
 
 proc: begin
 
@@ -236,7 +236,9 @@ proc: begin
             ,cast(ods.scale_score as decimal(9,3))
             ,ods.grade_level
             ,ods.school_id
-            ,case when syr.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr.school_year_id is null then 1
+            when syr.school_year_id is not null and gl.grade_code = 'unassigned' then 1 
+             end as backfill_needed_flag
         from    v_pmi_ods_mn_mca_ii as ods
         join    tmp_test_date dt
                 on      ods.test_date = dt.ods_test_date
@@ -246,7 +248,9 @@ proc: begin
                 on     dt.test_date between sy.begin_date and sy.end_date
         join    tmp_subject_list as sub
                 on      ods.test_subject_code = sub.client_ayp_subject_code
-        left join    c_student_year as syr
+        left join   (c_student_year as syr
+            inner join c_grade_level gl
+            on syr.grade_level_id = gl.grade_level_id) 
                 on syr.student_id = s.student_id
                 and syr.school_year_id = sy.school_year_id
         where   ods.student_eid is not null
@@ -263,7 +267,9 @@ proc: begin
             ,cast(ods2.scale_score as decimal(9,3))
             ,ods2.grade_level
             ,ods2.school_id
-            ,case when syr2.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr2.school_year_id is null then 1 
+             when syr2.school_year_id is not null and gl.grade_code = 'unassigned' then 1 
+            end as backfill_needed_flag
         from    v_pmi_ods_mn_mca_ii as ods2
         join    tmp_test_date dt2
                 on      ods2.test_date = dt2.ods_test_date
@@ -273,7 +279,9 @@ proc: begin
                 on     dt2.test_date between sy2.begin_date and sy2.end_date
         join    tmp_subject_list as sub2
                 on      ods2.test_subject_code = sub2.client_ayp_subject_code
-        left join    c_student_year as syr2
+        left join   (c_student_year as syr2
+            inner join c_grade_level gl
+            on syr2.grade_level_id = gl.grade_level_id) 
                 on syr2.student_id = s2.student_id
                 and syr2.school_year_id = sy2.school_year_id
         where   ods2.student_eid is not null
@@ -290,7 +298,9 @@ proc: begin
             ,cast(ods3.scale_score as decimal(9,3))
             ,ods3.grade_level
             ,ods3.school_id
-            ,case when syr3.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr3.school_year_id is null then 1
+             when syr3.school_year_id is not null and gl.grade_code = 'unassigned' then 1 
+             end as backfill_needed_flag
         from    v_pmi_ods_mn_mca_ii as ods3
         join    tmp_test_date dt3
                 on      ods3.test_date = dt3.ods_test_date
@@ -300,7 +310,9 @@ proc: begin
                 on     dt3.test_date between sy3.begin_date and sy3.end_date
         join    tmp_subject_list as sub3
                 on      ods3.test_subject_code = sub3.client_ayp_subject_code
-        left join    c_student_year as syr3
+        left join   (c_student_year as syr3
+            inner join c_grade_level gl
+            on syr3.grade_level_id = gl.grade_level_id) 
                 on syr3.student_id = s3.student_id
                 and syr3.school_year_id = sy3.school_year_id
         where   ods3.student_eid is not null
