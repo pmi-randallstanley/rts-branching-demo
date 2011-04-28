@@ -89,6 +89,15 @@ begin
                         from    pmi_color as c
                         join    c_color_ayp_subject as csrc
                                 on      c.color_id = csrc.color_id
+                        ## Until we have other metadata in place, we need to put the following join here to not have the HS / Pass-Fail subjects
+                        ##  Mess up the color sorting.
+                        join    (
+                                    select    ils.ayp_subject_id, count(distinct ils.color_id) 
+                                    from      c_color_ayp_subject ils 
+                                    group by  ils.ayp_subject_id
+                                    having    count(distinct ils.color_id) > 2
+                                ) as dt_2
+                                on      csrc.ayp_subject_id = dt_2.ayp_subject_id
                         cross join  c_color_swatch as cs
                                 on      cs.swatch_code = 'aypsubject'
                         where   c.active_flag = 1
