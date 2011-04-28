@@ -33,8 +33,14 @@ proc: begin
     ##      Key `ind_school_year` (`student_id`, `school_year_id`) ;
     #########################################################################################
 
+    # Get unassigned grade level id
+    select  grade_level_id 
+    into    @grade_level_id
+    from    c_grade_level gl
+    where   gl.grade_code = 'unassigned'
+    ;
 
-    insert ignore into c_student_year (
+    insert  into c_student_year (
             student_id
             ,school_year_id
             ,school_id
@@ -51,6 +57,10 @@ proc: begin
             ,now() as create_timestamp
             ,@client_id as client_id
     from tmp_student_year_backfill
+    on duplicate key update 
+            grade_level_id = case when c_student_year.grade_level_id = @grade_level_id then values(grade_level_id) else c_student_year.grade_level_id end,
+            last_user_id = 1234,
+            last_edit_timestamp = now()
     ;
     
 end proc;
