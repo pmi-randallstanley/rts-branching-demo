@@ -6,12 +6,13 @@ $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Red
 $Id: etl_hst_load_mn_grad.sql 9335 2010-10-03 18:10:23Z randall.stanley $ 
 */
 
+
 drop procedure if exists etl_hst_load_mn_grad//
 
 create definer=`dbadmin`@`localhost` procedure etl_hst_load_mn_grad()
 contains sql
 sql security invoker
-comment '$Rev: 9335 $ $Date: 2010-10-03 14:10:23 -0400 (Sun, 03 Oct 2010) $'
+comment '$Rev:  $'
 
 proc: begin 
 
@@ -233,12 +234,14 @@ proc: begin
             ,ods.test_date
             ,s.student_id
             ,sub.ayp_subject_id
-            ,month(dt.test_date)
+            ,month(dte.test_date)
             ,sy.school_year_id
             ,cast(ods.scale_score as decimal(9,3))
             ,ods.grade_level
             ,ods.school_id
-            ,case when syr.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr.school_year_id is null then 1
+                  when syr.school_year_id is not null and syr.grade_level_id = v_grade_unassigned_id then 1
+             end as backfill_needed_flag
         from    v_pmi_ods_mn_grad_test as ods
         join    tmp_test_date as dte
                 on      ods.test_date = dte.ods_test_date
@@ -248,7 +251,7 @@ proc: begin
                 on     dte.test_date between sy.begin_date and sy.end_date
         join    tmp_subject_list as sub
                 on      ods.test_subject_code = sub.client_ayp_subject_code
-        left join    c_student_year as syr
+        left join   c_student_year as syr
                 on      syr.student_id = s.student_id
                 and     syr.school_year_id = sy.school_year_id
         where   ods.student_eid is not null
@@ -260,12 +263,14 @@ proc: begin
             ,ods2.test_date
             ,s2.student_id
             ,sub2.ayp_subject_id
-            ,month(dt2.test_date)
+            ,month(dte2.test_date)
             ,sy2.school_year_id
             ,cast(ods2.scale_score as decimal(9,3))
             ,ods2.grade_level
             ,ods2.school_id
-            ,case when syr2.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr2.school_year_id is null then 1
+                  when syr2.school_year_id is not null and syr2.grade_level_id = v_grade_unassigned_id then 1
+             end as backfill_needed_flag
         from    v_pmi_ods_mn_grad_test as ods2
         join    tmp_test_date as dte2
                 on      ods2.test_date = dte2.ods_test_date
@@ -275,7 +280,7 @@ proc: begin
                 on     dte2.test_date between sy2.begin_date and sy2.end_date
         join    tmp_subject_list as sub2
                 on      ods2.test_subject_code = sub2.client_ayp_subject_code
-        left join    c_student_year as syr2
+        left join   c_student_year as syr2
                 on syr2.student_id = s2.student_id
                 and syr2.school_year_id = sy2.school_year_id
         where   ods2.student_eid is not null
@@ -287,12 +292,14 @@ proc: begin
             ,ods3.test_date
             ,s3.student_id
             ,sub3.ayp_subject_id
-            ,month(dt3.test_date)
+            ,month(dte3.test_date)
             ,sy3.school_year_id
             ,cast(ods3.scale_score as decimal(9,3))
             ,ods3.grade_level
             ,ods3.school_id
-            ,case when syr3.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr3.school_year_id is null then 1
+                  when syr3.school_year_id is not null and syr3.grade_level_id = v_grade_unassigned_id then 1
+             end as backfill_needed_flag
         from    v_pmi_ods_mn_grad_test as ods3
         join    tmp_test_date as dte3
                 on      ods3.test_date = dte3.ods_test_date
@@ -302,7 +309,7 @@ proc: begin
                 on     dte3.test_date between sy3.begin_date and sy3.end_date
         join    tmp_subject_list as sub3
                 on      ods3.test_subject_code = sub3.client_ayp_subject_code
-        left join    c_student_year as syr3
+        left join   c_student_year as syr3
                 on syr3.student_id = s3.student_id
                 and syr3.school_year_id = sy3.school_year_id
         where   ods3.student_eid is not null

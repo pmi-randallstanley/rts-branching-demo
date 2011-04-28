@@ -266,7 +266,9 @@ proc: begin
             ,sy.school_year_id
             ,ods.grade
             ,ods.school_state_code
-            ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when sty.school_year_id is null then 1
+                  when sty.school_year_id is not null and sty.grade_level_id = v_grade_unassigned_id then 1
+             end as backfill_needed_flag
         from    v_pmi_ods_fcat_science as ods
         join    c_student as s
                 on      s.student_code = ods.student_id
@@ -274,7 +276,7 @@ proc: begin
                 on      ods.test_mo_year = dte.test_mo_year
         join    c_school_year as sy 
                 on      dte.test_date between sy.begin_date and sy.end_date
-        left join   c_student_year as sty 
+        left join   c_student_year as sty
                 on      sty.student_id = s.student_id 
                 and     sty.school_year_id = sy.school_year_id
         where   ods.student_id is not null
@@ -289,7 +291,9 @@ proc: begin
             ,sy2.school_year_id
             ,ods2.grade
             ,ods2.school_state_code
-            ,case when sty2.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when sty2.school_year_id is null then 1
+                  when sty2.school_year_id is not null and sty2.grade_level_id = v_grade_unassigned_id then 1
+             end as backfill_needed_flag
         from    v_pmi_ods_fcat_science as ods2
         join    c_student as s2
                 on      s2.student_state_code = ods2.student_id
@@ -297,7 +301,7 @@ proc: begin
                 on      ods2.test_mo_year = dte2.test_mo_year
         join    c_school_year as sy2
                 on      dte2.test_date between sy2.begin_date and sy2.end_date
-        left join   c_student_year as sty2 
+        left join   c_student_year as sty2
                 on      sty2.student_id = s2.student_id 
                 and     sty2.school_year_id = sy2.school_year_id
         where   ods2.student_id is not null
@@ -312,7 +316,9 @@ proc: begin
             ,sy3.school_year_id
             ,ods3.grade
             ,ods3.school_state_code
-            ,case when sty3.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when sty3.school_year_id is null then 1 
+                  when sty3.school_year_id is not null and sty3.grade_level_id = v_grade_unassigned_id then 1
+            end as backfill_needed_flag
         from    v_pmi_ods_fcat_science as ods3
         join    c_student as s3
                 on      s3.fid_code = ods3.student_id
@@ -320,7 +326,7 @@ proc: begin
                 on ods3.test_mo_year = dte3.test_mo_year
         join c_school_year as sy3 
                 on dte3.test_date between sy3.begin_date and sy3.end_date
-        left join c_student_year as sty3 
+        left join   c_student_year as sty3
                 on sty3.student_id = s3.student_id 
                 and     sty3.school_year_id = sy3.school_year_id
         where   ods3.student_id is not null

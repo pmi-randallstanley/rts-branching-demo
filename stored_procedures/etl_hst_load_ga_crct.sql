@@ -6,6 +6,7 @@ $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Red
 $Id: etl_hst_load_ga_crct.sql 9335 2010-10-03 18:10:23Z randall.stanley $
  */
  
+ 
 drop procedure if exists etl_hst_load_ga_crct//
 
 create definer=`dbadmin`@`localhost` procedure etl_hst_load_ga_crct()
@@ -232,11 +233,13 @@ proc: begin
                     ,ods.school_year
                     ,ods.grade
                     ,ods.school_code
-                    ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+                    ,case when sty.school_year_id is null then 1
+                          when sty.school_year_id is not null and sty.grade_level_id = v_grade_unassigned_id then 1 
+                     end as backfill_needed_flag
             from    v_pmi_ods_ga_crct as ods
             join    c_student as s
                     on    s.student_code = ods.student_id
-            left join c_student_year as sty 
+            left join   c_student_year as sty 
                     on    sty.student_id = s.student_id 
                     and   sty.school_year_id = ods.school_year
             where   ods.student_id is not null
@@ -248,11 +251,13 @@ proc: begin
                     ,ods2.school_year
                     ,ods2.grade
                     ,ods2.school_code
-                    ,case when sty2.school_year_id is null then 1 end as backfill_needed_flag
+                    ,case when sty2.school_year_id is null then 1
+                          when sty2.school_year_id is not null and sty2.grade_level_id = v_grade_unassigned_id then 1 
+                     end as backfill_needed_flag
             from    v_pmi_ods_ga_crct as ods2
             join    c_student as s2
                     on    s2.student_state_code = ods2.student_id
-            left join c_student_year as sty2
+            left join   c_student_year as sty2
                     on    sty2.student_id = s2.student_id 
                     and   sty2.school_year_id = ods2.school_year
             where   ods2.student_id is not null
@@ -264,11 +269,13 @@ proc: begin
                     ,ods3.school_year
                     ,ods3.grade
                     ,ods3.school_code
-                    ,case when sty3.school_year_id is null then 1 end as backfill_needed_flag
+                    ,case when sty3.school_year_id is null then 1 
+                          when sty3.school_year_id is not null and sty3.grade_level_id = v_grade_unassigned_id then 1 
+                    end as backfill_needed_flag
             from    v_pmi_ods_ga_crct as ods3
             join    c_student as s3
                     on    s3.fid_code = ods3.student_id
-            left join c_student_year as sty3 
+            left join   c_student_year as sty3
                     on    sty3.student_id = s3.student_id 
                     and   sty3.school_year_id = ods3.school_year
             where   ods3.student_id is not null
@@ -446,7 +453,7 @@ proc: begin
         if v_delete_count > 0 then
 
             delete ayp_str.*
-            from tmp_stu_admin as tmp1
+            from tmp_delete_key as tmp1
             join    c_ayp_subject_student as ss
                     on      tmp1.student_id = ss.student_id
                     and     tmp1.ayp_subject_id = ss.ayp_subject_id
@@ -460,7 +467,7 @@ proc: begin
              ;
 
             delete  ss.*
-            from    tmp_stu_admin as tmp1
+            from    tmp_delete_key as tmp1
             join    c_ayp_subject_student as ss
                     on      ss.student_id = tmp1.student_id
                     and     ss.ayp_subject_id = tmp1.ayp_subject_id

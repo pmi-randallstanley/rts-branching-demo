@@ -6,12 +6,13 @@ $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Red
 $Id: etl_hst_load_ga_eoct.sql 9335 2010-10-03 18:10:23Z randall.stanley $ 
 */
 
+
 drop procedure if exists etl_hst_load_ga_eoct//
 
 create definer=`dbadmin`@`localhost` procedure etl_hst_load_ga_eoct()
 contains sql
 sql security invoker
-comment '$Rev: 9335 $ $Date: 2010-10-03 14:10:23 -0400 (Sun, 03 Oct 2010) $'
+comment '$Rev:  $'
 
 proc: begin 
 
@@ -252,7 +253,9 @@ proc: begin
                     ,CAST(ods.grade_conversion as decimal(9,3))
                     ,v_grade_unassigned_id  #there is no grade code in the file
                     ,ods.sch_code
-                    ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+                    ,case when sty.school_year_id is null then 1
+                          when sty.school_year_id is not null and sty.grade_level_id = v_grade_unassigned_id then 1 
+                      end as backfill_needed_flag
             from    v_pmi_ods_ga_eoct as ods
             join    tmp_date_conversion as c_date
                     on    ods.yyyy = c_date.yyyy
@@ -263,7 +266,7 @@ proc: begin
                     on    c_date.test_date BETWEEN sy.begin_date AND sy.end_date
             join    tmp_subject_list as sub
                     on    ods.section = sub.client_ayp_subject_code
-            left join c_student_year as sty 
+            left join   c_student_year as sty
                     on    sty.student_id = s.student_id 
                     and   sty.school_year_id = sy.school_year_id
             where   ods.gtid is not null
@@ -281,7 +284,9 @@ proc: begin
                     ,CAST(ods2.grade_conversion as decimal(9,3))
                     ,v_grade_unassigned_id  #there is no grade code in the file
                     ,ods2.sch_code
-                    ,case when sty2.school_year_id is null then 1 end as backfill_needed_flag
+                    ,case when sty2.school_year_id is null then 1
+                          when sty2.school_year_id is not null and sty2.grade_level_id = v_grade_unassigned_id then 1 
+                      end as backfill_needed_flag
             from    v_pmi_ods_ga_eoct as ods2
             join    tmp_date_conversion as c_date2
                     on    ods2.yyyy = c_date2.yyyy
@@ -292,7 +297,7 @@ proc: begin
                     on    c_date2.test_date BETWEEN sy2.begin_date AND sy2.end_date
             join    tmp_subject_list as sub2
                     on    ods2.section = sub2.client_ayp_subject_code
-            left join c_student_year as sty2
+            left join  c_student_year as sty2
                     on    sty2.student_id = s2.student_id 
                     and   sty2.school_year_id = sy2.school_year_id
             where   ods2.ssn is not null
@@ -310,7 +315,9 @@ proc: begin
                     ,CAST(ods3.grade_conversion as decimal(9,3))
                     ,v_grade_unassigned_id
                     ,ods3.sch_code
-                    ,case when sty3.school_year_id is null then 1 end as backfill_needed_flag
+                    ,case when sty3.school_year_id is null then 1
+                          when sty3.school_year_id is not null and sty3.grade_level_id = v_grade_unassigned_id then 1 
+                      end as backfill_needed_flag
             from    v_pmi_ods_ga_eoct as ods3
             join    tmp_date_conversion as c_date3
                     on    ods3.yyyy = c_date3.yyyy
@@ -321,7 +328,7 @@ proc: begin
                     on    c_date3.test_date BETWEEN sy3.begin_date AND sy3.end_date
             join    tmp_subject_list as sub3
                     on    ods3.section = sub3.client_ayp_subject_code
-            left join c_student_year as sty3
+            left join   c_student_year as sty3
                     on    sty3.student_id = s3.student_id 
                     and   sty3.school_year_id = sy3.school_year_id
             where   ods3.ssn is not null

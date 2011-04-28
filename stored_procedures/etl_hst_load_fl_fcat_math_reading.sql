@@ -6,6 +6,7 @@ $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Red
 $Id: etl_hst_load_fl_fcat_math_reading.sql 9335 2010-10-03 18:10:23Z randall.stanley $ 
 */
 
+
 drop procedure if exists etl_hst_load_fl_fcat_math_reading//
 
 create definer=`dbadmin`@`localhost` procedure etl_hst_load_fl_fcat_math_reading()
@@ -327,7 +328,9 @@ proc: begin
             ,sy.school_year_id
             ,tmpSas.grade_code
             ,tmpSas.school_code
-            ,case when syr.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr.school_year_id is null then 1
+                  when syr.school_year_id is not null and syr.grade_level_id = v_grade_unassigned_id then 1 
+             end as backfill_needed_flag
         from    tmp_stu_admin_subject as tmpSas
         join    c_student as s
                 on      s.student_code = tmpSas.student_code
@@ -335,7 +338,7 @@ proc: begin
                 on tmpSas.test_mo_year = c_date.test_mo_year
         JOIN c_school_year as sy 
                 on c_date.test_date BETWEEN sy.begin_date AND sy.end_date
-        left join    c_student_year as syr
+        left join   c_student_year as syr
                 on syr.student_id = s.student_id
                 and syr.school_year_id = sy.school_year_id
         union all
@@ -348,7 +351,9 @@ proc: begin
             ,sy2.school_year_id
             ,tmpSas2.grade_code
             ,tmpSas2.school_code
-            ,case when syr2.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr2.school_year_id is null then 1
+                  when syr2.school_year_id is not null and syr2.grade_level_id = v_grade_unassigned_id then 1 
+             end as backfill_needed_flag
         from    tmp_stu_admin_subject as tmpSas2
         join    c_student as s2
                 on      s2.student_state_code = tmpSas2.student_code
@@ -356,7 +361,7 @@ proc: begin
                 on tmpSas2.test_mo_year = c_date2.test_mo_year
         JOIN c_school_year as sy2 
                 on c_date2.test_date BETWEEN sy2.begin_date AND sy2.end_date
-        left join    c_student_year as syr2
+        left join   c_student_year as syr2
                 on syr2.student_id = s2.student_id
                 and syr2.school_year_id = sy2.school_year_id
         union all
@@ -369,7 +374,9 @@ proc: begin
             ,sy3.school_year_id
             ,tmpSas3.grade_code
             ,tmpSas3.school_code
-            ,case when syr3.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr3.school_year_id is null then 1
+                  when syr3.school_year_id is not null and syr3.grade_level_id = v_grade_unassigned_id then 1 
+             end as backfill_needed_flag
         from    tmp_stu_admin_subject as tmpSas3
         join    c_student as s3
                 on      s3.fid_code = tmpSas3.student_code
@@ -377,7 +384,7 @@ proc: begin
                 on tmpSas3.test_mo_year = c_date3.test_mo_year
         JOIN c_school_year as sy3
                 on c_date3.test_date BETWEEN sy3.begin_date AND sy3.end_date
-        left join    c_student_year as syr3
+        left join   c_student_year as syr3
                 on syr3.student_id = s3.student_id
                 and syr3.school_year_id = sy3.school_year_id
         on duplicate key update row_num = values(row_num);

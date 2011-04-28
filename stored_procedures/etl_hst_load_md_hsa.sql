@@ -6,12 +6,13 @@ $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Red
 $Id: etl_hst_load_md_hsa.sql 9335 2010-10-03 18:10:23Z randall.stanley $ 
 */
 
+
 drop procedure if exists etl_hst_load_md_hsa//
 
 create definer=`dbadmin`@`localhost` procedure etl_hst_load_md_hsa()
 contains sql
 sql security invoker
-comment '$Rev: 9335 $ $Date: 2010-10-03 14:10:23 -0400 (Sun, 03 Oct 2010) $'
+comment '$Rev:  $'
 
 proc: begin 
   
@@ -223,7 +224,9 @@ proc: begin
             ,sty.school_year_id
             ,ods.grade
             ,ods.school_number
-            ,case when syr.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr.school_year_id is null then 1 
+                  when syr.school_year_id is not null and syr.grade_level_id = v_grade_unassigned_id then 1
+              end as backfill_needed_flag
         from    v_pmi_ods_hsa as ods
         join    tmp_hsa_test_date as tmp
                 on      ods.test_mo_year = tmp.test_mo_year
@@ -233,7 +236,7 @@ proc: begin
                 on     tmp.test_date between sty.begin_date and sty.end_date
         join    tmp_hsa_subject_list as sub
                 on      ods.content_area = sub.client_ayp_subject_code
-        left join    c_student_year as syr
+        left join   c_student_year as syr
                 on syr.student_id = s.student_id
                 and syr.school_year_id = sty.school_year_id
         where ods.scale_score REGEXP '^[0-9]' > 0
@@ -248,7 +251,9 @@ proc: begin
             ,sty.school_year_id
             ,ods.grade
             ,ods.school_number
-            ,case when syr.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr.school_year_id is null then 1
+                  when syr.school_year_id is not null and syr.grade_level_id = v_grade_unassigned_id then 1
+              end as backfill_needed_flag
         from    v_pmi_ods_hsa as ods
         join    tmp_hsa_test_date as tmp
                 on      ods.test_mo_year = tmp.test_mo_year
@@ -258,7 +263,7 @@ proc: begin
                 on     tmp.test_date between sty.begin_date and sty.end_date
         join    tmp_hsa_subject_list as sub
                 on      ods.content_area = sub.client_ayp_subject_code
-        left join    c_student_year as syr
+        left join   c_student_year as syr
                 on syr.student_id = s.student_id
                 and syr.school_year_id = sty.school_year_id
         where ods.scale_score REGEXP '^[0-9]' > 0
@@ -273,7 +278,9 @@ proc: begin
             ,sty.school_year_id
             ,ods.grade
             ,ods.school_number
-            ,case when syr.school_year_id is null then 1 end as backfill_needed_flag
+            ,case when syr.school_year_id is null then 1
+                  when syr.school_year_id is not null and syr.grade_level_id = v_grade_unassigned_id then 1
+              end as backfill_needed_flag
         from    v_pmi_ods_hsa as ods
         join    tmp_hsa_test_date as tmp
                 on       ods.test_mo_year = tmp.test_mo_year
@@ -283,7 +290,7 @@ proc: begin
                 on     tmp.test_date between sty.begin_date and sty.end_date
         join    tmp_hsa_subject_list as sub
                 on      ods.content_area = sub.client_ayp_subject_code
-        left join    c_student_year as syr
+        left join   c_student_year as syr
                 on syr.student_id = s.student_id
                 and syr.school_year_id = sty.school_year_id
         where ods.scale_score REGEXP '^[0-9]' > 0

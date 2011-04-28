@@ -6,6 +6,7 @@ $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Red
 $Id: etl_hst_load_md_hsa_student_plus.sql 9335 2010-10-03 18:10:23Z randall.stanley $ 
  */
  
+ 
 drop procedure if exists etl_hst_load_md_hsa_student_plus//
 
 create definer=`dbadmin`@`localhost` procedure etl_hst_load_md_hsa_student_plus()
@@ -227,7 +228,9 @@ proc: begin
            ,sy.school_year_id
            ,ods.grade
            ,ods.building
-           ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+           ,case  when sty.school_year_id is null then 1
+                  when sty.school_year_id is not null and sty.grade_level_id = v_grade_unassigned_id then 1
+            end as backfill_needed_flag
  
        from    v_pmi_ods_ltdb_studentplus as ods
        join    c_student as s
@@ -237,7 +240,7 @@ proc: begin
                on      ods.test_date between sy.begin_date and sy.end_date
        join    tmp_hsa_subject_xref as sub
                on      ods.subtest = sub.client_ayp_subject_code
-       left join  c_student_year sty
+       left join   c_student_year as sty
                   on    sty.student_id = s.student_id
                   and   sty.school_year_id = sy.school_year_id
        where   ods.student_id is not null
@@ -253,7 +256,9 @@ proc: begin
            ,sy2.school_year_id
            ,ods2.grade
            ,ods2.building
-           ,case when sty2.school_year_id is null then 1 end as backfill_needed_flag
+           ,case  when sty2.school_year_id is null then 1 
+                  when sty2.school_year_id is not null and sty2.grade_level_id = v_grade_unassigned_id then 1
+           end as backfill_needed_flag
  
        from    v_pmi_ods_ltdb_studentplus as ods2
        join    c_student as s2
@@ -263,7 +268,7 @@ proc: begin
                on      ods2.test_date between sy2.begin_date and sy2.end_date
        join    tmp_hsa_subject_xref as sub2
                on      ods2.subtest = sub2.client_ayp_subject_code
-       left join  c_student_year as sty2
+       left join   c_student_year as sty2
                   on    sty2.student_id = s2.student_id
                   and   sty2.school_year_id = sy2.school_year_id
        where   ods2.student_id is not null
@@ -279,7 +284,9 @@ proc: begin
            ,sy3.school_year_id
            ,ods3.grade
            ,ods3.building
-           ,case when sty3.school_year_id is null then 1 end as backfill_needed_flag
+           ,case  when sty3.school_year_id is null then 1
+                  when sty3.school_year_id is not null and sty3.grade_level_id = v_grade_unassigned_id then 1
+            end as backfill_needed_flag
  
        from    v_pmi_ods_ltdb_studentplus as ods3
        join    c_student as s3
@@ -289,7 +296,7 @@ proc: begin
                on      ods3.test_date between sy3.begin_date and sy3.end_date
        join    tmp_hsa_subject_xref as sub3
                on      ods3.subtest = sub3.client_ayp_subject_code
-       left join  c_student_year as sty3
+       left join   c_student_year as sty3
                   on    sty3.student_id = s3.student_id
                   and   sty3.school_year_id = sy3.school_year_id
        where   ods3.student_id is not null
