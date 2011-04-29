@@ -6,7 +6,6 @@ $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Red
 $Id: etl_rpt_bbcard_detail_snap.sql 9908 2011-01-19 19:46:35Z ryan.riordan $
 */
 
-delimiter //
 drop procedure if exists etl_rpt_bbcard_detail_snap //
 
 create definer=`dbadmin`@`localhost` procedure etl_rpt_bbcard_detail_snap()

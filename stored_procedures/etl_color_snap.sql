@@ -6,7 +6,6 @@ $HeadURL$
 $Id$
 */
 
-delimiter //
 drop procedure if exists etl_color_snap//
 
 create definer=`dbadmin`@`localhost` procedure etl_color_snap()
