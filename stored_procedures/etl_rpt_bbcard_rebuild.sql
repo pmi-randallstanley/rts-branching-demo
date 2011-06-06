@@ -19,7 +19,7 @@ proc: begin
     call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
 
     flush tables `rpt_bbcard_detail_college_prep`, `rpt_bbcard_detail_lag_lead_hst_subject`, `rpt_bbcard_detail_lag_lead_hst_strand`
-        , `rpt_bbcard_detail_assessment`, `rpt_bbcard_detail_lexile`,`rpt_bbcard_detail_grades`,`rpt_bbcard_detail`;
+        , `rpt_bbcard_detail_assessment`, `rpt_bbcard_detail_lexile`,`rpt_bbcard_detail_grades`,`rpt_bbcard_detail_smi_quantile`,`rpt_bbcard_detail`;
 
     truncate table `rpt_bbcard_detail_assessment`;
     truncate table `rpt_bbcard_detail_college_prep`;
@@ -27,6 +27,7 @@ proc: begin
     truncate table `rpt_bbcard_detail_lag_lead_hst_strand`;
     truncate table `rpt_bbcard_detail_grades`;
     truncate table `rpt_bbcard_detail_lexile`;
+    truncate table `rpt_bbcard_detail_smi_quartile`;
 
     
     # Insert scores
@@ -37,6 +38,7 @@ proc: begin
     call etl_rpt_bbcard_detail_grades();
     call etl_rpt_bbcard_detail_lexile();
     call etl_rpt_bbcard_detail_snap();
+    call etl_rpt_bbcard_detail_smi_quantile();
 
     # Rebuild BB Card Filitering data
     call etl_pm_bbcard_measure_select();

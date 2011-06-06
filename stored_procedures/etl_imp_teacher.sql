@@ -236,7 +236,7 @@ BEGIN
         ,src.school_id
         ,@client_id
         ,src.user_code
-        ,u.role_id
+        ,v_role_id
         ,1234
         ,now()
     
@@ -244,7 +244,6 @@ BEGIN
     join    c_user as u
             on      src.login = u.login
     on duplicate key update user_code = values(user_code)
-        ,role_id = values(role_id)
         ,last_user_id = values(last_user_id)
     ;
 

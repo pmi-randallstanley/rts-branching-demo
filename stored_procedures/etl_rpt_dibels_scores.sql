@@ -34,18 +34,20 @@ PROC: BEGIN
     -- Lookup how client provides student identifier     
     SET @pm_use_stu_state_code_dibels := pmi_f_get_etl_setting('pmUseStuStateCodeDibels');
     
-    select  COALESCE(cast(value as SIGNED),0) 
-    into    @dibels_assess_freq_id 
-    from    pmi_client_settings 
-    where   client_setting_code = 'pmDibelAssessFreqId'
-    ;
-    
     IF @pm_use_stu_state_code_dibels = 'y' THEN 
         -- Client provides student identifier as student_state_code
         SET v_pm_use_stu_state_code_dibels = 'y';
     END IF;
      
     call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend); 
+
+    select  COALESCE(cast(value as SIGNED),0) 
+    into    @dibels_assess_freq_id 
+    from    pmi_client_settings 
+    where   client_setting_code = 'pmDibelAssessFreqId'
+    and     client_id = @client_id
+    ;
+    
 
     /*
     IF rebuild = 1
