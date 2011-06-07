@@ -1,3 +1,4 @@
+
 DROP PROCEDURE IF EXISTS etl_imp_school_grades_predictive //
 
 CREATE definer=`dbadmin`@`localhost` procedure etl_imp_school_grades_predictive( p_school_year_id int(10) )
@@ -73,7 +74,7 @@ BEGIN
           `curr_yr_dev_score` decimal(9,3) default NULL,
           `prior_yr_dev_score` decimal(9,3) default NULL,
           `hp_flag` tinyint(1) default NULL,
-          `writing_40_flag` tinyint(1) default NULL,  #NC
+          ###`writing_40_flag` tinyint(1) default NULL,  #NC
           `lg_flag` tinyint(1) default NULL,
           `rank` int(10) default NULL,
           `bott_lg_flag` tinyint(1) default NULL,
@@ -88,8 +89,8 @@ BEGIN
           `ayp_subject_code` varchar(25) NOT NULL,
           `min_grade_sequence` int(10) default NULL,
           `max_grade_sequence` int(10) default NULL,
-          unique key `uq_tmp_ayp_subject_grade_filter_list_code` (`ayp_subject_code`),
-          unique key `uq_tmp_ayp_subject_grade_filter_list_id` (`ayp_subject_id`)
+          unique key `uq_tmp_ayp_subject_grade_filter_list_code` (`ayp_subject_code`,`max_grade_sequence`)###,
+          ###unique key `uq_tmp_ayp_subject_grade_filter_list_id` (`ayp_subject_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=latin1
         ;
 
@@ -99,7 +100,8 @@ BEGIN
             ,max_grade_sequence
         )
         
-        values ('fcatMath', 0, 10)
+        values ('fcatMath', 0, 8)  ### Changed max grade for math from 10 to 8 (9th grade is not included in this calculation
+                ,('fcatMath',10,10)  ### Adding 10th grade
                 ,('fcatReading', 0, 10)
                 ,('fcatScience', 0, 11)
                 ,('fcatWriting', 0, 10)
@@ -127,7 +129,7 @@ BEGIN
             ,curr_yr_dev_score
             ,prior_yr_dev_score
             ,hp_flag
-            ,writing_40_flag   #NC
+            ###,writing_40_flag   #NC
             ,lg_flag
             ,bott_lg_flag
         )
@@ -143,7 +145,7 @@ BEGIN
                 cass.alt_ayp_score          AS 'curr_yr_dev_score',
                 NULL                        AS 'prior_yr_dev_score',
                 NULL                        AS 'hp_flag',
-                NULL                        AS 'writing_40_flag',  #NC
+                ###NULL                        AS 'writing_40_flag',  #NC
                 NULL                        AS 'lg_flag',
                 NULL                        AS 'bott_lg_flag' 
         FROM    v_pmi_ods_state_data_membership_file as state
@@ -215,8 +217,9 @@ BEGIN
                                 WHEN t.ayp_subject_code = 'fcatScience' AND t.curr_yr_pmi_al >= 3      THEN 1
                                 WHEN t.ayp_subject_code = 'fcatScience'                                THEN 0
                                 
-                                WHEN t.ayp_subject_code = 'fcatWriting' AND t.curr_yr_pmi_al >= 3      THEN 1     -- REWRITE: Writing scores seem more accurate using 3.5 now
-                                WHEN t.ayp_subject_code = 'fcatWriting'                                THEN 0     -- REWRITE: Writing scores seem more accurate using 3.5 now
+                                ###WHEN t.ayp_subject_code = 'fcatWriting' AND t.curr_yr_pmi_al >= 3      THEN 1     -- REWRITE: Writing scores seem more accurate using 3.5 now
+                                WHEN t.ayp_subject_code = 'fcatWriting' AND t.curr_yr_pmi_al >= 4      THEN 1     -- Changing back to Writing High Standard of 4.0 or better
+                                WHEN t.ayp_subject_code = 'fcatWriting'                                THEN 0    
                                                            
                             END
                             
@@ -224,6 +227,8 @@ BEGIN
                      END;       
                      
         #NC
+        ###
+        /*
         UPDATE  tmp_school_grades_predictive t
         JOIN c_student cs
             ON  t.student_id = cs.student_id 
@@ -250,6 +255,7 @@ BEGIN
                      END;                       
         
         #END NC
+        */
 
         -- ---------------------------------------------------------------------------------------
         -- Flag Learning Gain Students per Subject (Reading/Math only)
@@ -438,7 +444,8 @@ BEGIN
                      CASE WHEN t.ayp_subject_code = 'fcatScience' THEN ROUND(SUM(t.hp_flag)/COUNT(t.hp_flag) * 100)    END AS 'science_points',
                      #NC CASE WHEN t.ayp_subject_code = 'fcatWriting' THEN ROUND(SUM(t.hp_flag)/COUNT(t.hp_flag) * 100)    END AS 'writing_points',
                      #NC Writing Points in 2010 = Average of:  Students scoring 3.0 or higher AND Students scoring 4.0 or higher
-                     CASE WHEN t.ayp_subject_code = 'fcatWriting' THEN ROUND( (SUM(t.hp_flag)/COUNT(t.hp_flag) + SUM(t.writing_40_flag)/COUNT(t.hp_flag)) / 2  * 100)    END AS 'writing_points',
+                     ###CASE WHEN t.ayp_subject_code = 'fcatWriting' THEN ROUND( (SUM(t.hp_flag)/COUNT(t.hp_flag) + SUM(t.writing_40_flag)/COUNT(t.hp_flag)) / 2  * 100)    END AS 'writing_points',
+                     CASE WHEN t.ayp_subject_code = 'fcatWriting' THEN ROUND(SUM(t.hp_flag)/COUNT(t.hp_flag) * 100)    END AS 'writing_points',  ## Reverting back to original
                      CASE WHEN t.ayp_subject_code = 'fcatMath'    THEN ROUND(SUM(t.lg_flag)/COUNT(t.lg_flag) * 100)    END AS 'math_lg_pct',
                      CASE WHEN t.ayp_subject_code = 'fcatReading' THEN ROUND(SUM(t.lg_flag)/COUNT(t.lg_flag) * 100)    END AS 'reading_lg_pct',
                                                          
