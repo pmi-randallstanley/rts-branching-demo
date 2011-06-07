@@ -36,52 +36,57 @@ begin
         set @last_test_id = 9999999999;
 
         # sam_test_layout
-        insert into sam_test_layout (
-            element_id
-           ,test_id
-           ,passage_id
-           ,question_id
-           ,client_id
-           ,last_user_id
-           ,create_timestamp
-        )
-        select IF(@last_test_id = test_id, @ndx := @ndx + 1, @ndx := 1) as element_id
-              ,@last_test_id := test_id                                 as test_id
-              ,IF(is_passage = 1, NULL, passage_id)
-              ,IF(is_passage = 0, NULL, question_id)
-              ,client_id
-              ,last_user_id
-              ,create_timestamp
-        from (select tt.test_id
-                    ,q.passage_id
-                    ,q.question_id
-                    ,@client_id    as client_id
-                    ,1234          as last_user_id
-                    ,NOW()         as create_timestamp
-                    ,1             as is_passage
-              from tmp_test tt
-              join v_pmi_ods_intel_assess_ak oak
-                on tt.external_test_id = oak.external_test_id
-              join ca_ib.question q
-                on q.import_xref_code = oak.external_question_id
-              union all
-              select tt.test_id
-                    ,q.passage_id
-                    ,q.question_id
-                    ,@client_id    as client_id
-                    ,1234          as last_user_id
-                    ,NOW()         as create_timestamp
-                    ,0             as is_passage
-              from tmp_test tt
-              join v_pmi_ods_intel_assess_ak oak
-                on tt.external_test_id = oak.external_test_id
-              join ca_ib.question q
-                on q.import_xref_code = oak.external_question_id
-              where q.passage_id IS NOT NULL
-              group by q.passage_id) tmp
-        order by test_id, question_id, is_passage
+        set @sql_string := CONCAT(
+        'insert into sam_test_layout ( ',
+            'element_id ',
+           ',test_id ',
+           ',passage_id ',
+           ',question_id ',
+           ',client_id ',
+           ',last_user_id ',
+           ',create_timestamp ',
+        ') ',
+        'select IF(@last_test_id = test_id, @ndx := @ndx + 1, @ndx := 1) as element_id ',
+              ',@last_test_id := test_id                                 as test_id ',
+              ',IF(is_passage = 1, NULL, passage_id) ',
+              ',IF(is_passage = 0, NULL, question_id) ',
+              ',client_id ',
+              ',last_user_id ',
+              ',create_timestamp ',
+        'from (select tt.test_id ',
+                    ',q.passage_id ',
+                    ',q.question_id ',
+                    ',@client_id    as client_id ',
+                    ',1234          as last_user_id ',
+                    ',NOW()         as create_timestamp ',
+                    ',1             as is_passage ',
+              'from tmp_test tt ',
+              'join v_pmi_ods_intel_assess_ak oak ',
+                'on tt.external_test_id = oak.external_test_id ',
+              'join ', @db_name_ib, '.question q '
+                'on q.import_xref_code = oak.external_question_id ',
+              'union all ',
+              'select tt.test_id ',
+                    ',q.passage_id ',
+                    ',q.question_id ',
+                    ',@client_id    as client_id ',
+                    ',1234          as last_user_id ',
+                    ',NOW()         as create_timestamp ',
+                    ',0             as is_passage ',
+              'from tmp_test tt ',
+              'join v_pmi_ods_intel_assess_ak oak ',
+                'on tt.external_test_id = oak.external_test_id ',
+              'join ', @db_name_ib, '.question q '
+                'on q.import_xref_code = oak.external_question_id ',
+              'where q.passage_id IS NOT NULL ',
+              'group by q.passage_id) tmp ',
+        'order by test_id, question_id, is_passage ')
         ;
 
+        prepare sql_string from @sql_string;
+        execute sql_string;
+        deallocate prepare sql_string;
+	
         insert into sam_test_section (
             test_id
            ,section_num
