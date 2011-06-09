@@ -1,3 +1,4 @@
+
 /*
 $Rev: 8022 $ 
 $Author: randall.stanley $ 
@@ -35,7 +36,7 @@ proc: begin
         UPDATE c_ayp_subject_student AS ss
         JOIN    c_ayp_subject AS sub
                 ON      ss.ayp_subject_id = sub.ayp_subject_id
-                AND     sub.ayp_subject_code not in ('fcatScience','fcatWriting')
+                AND     sub.ayp_subject_code not in ('fcatScience','fcatWriting','fleocAlgebra1','fleocGeometry')
         JOIN    c_student_year AS sty
                 ON      sty.student_id = ss.student_id
                 AND     sty.school_year_id = ss.school_year_id
@@ -56,7 +57,7 @@ proc: begin
         UPDATE c_ayp_subject_student AS ss
         JOIN    c_ayp_subject AS sub
                 ON      ss.ayp_subject_id = sub.ayp_subject_id
-                AND     sub.ayp_subject_code in ('fcatScience','fcatWriting')
+                AND     sub.ayp_subject_code in ('fcatScience','fcatWriting','fleocAlgebra1','fleocGeometry')
         JOIN    c_student_year AS sty
                 ON      sty.student_id = ss.student_id
                 AND     sty.school_year_id = ss.school_year_id
