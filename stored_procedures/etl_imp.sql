@@ -29,7 +29,7 @@ SQL SECURITY INVOKER
         DECLARE v_etl_lag_color_update_flag     tinyint(1) default '0';
         DECLARE v_etl_exec_stu_cust_fltr_flag   tinyint(1) default '0';
 
-        call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+        call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
         SELECT pmi_admin.pmi_f_get_next_sequence('etl_imp_id', 1) INTO @etl_imp_id;
         SET @begin_time := now();
@@ -864,6 +864,24 @@ SQL SECURITY INVOKER
             select 'No Scan Files - Turning Results' as Uploader_Scan_File_Turning;
         end if;    
 
+        ###########################################
+        ## Run etl_bm_load_pmi_scan_eng_results  ##
+        ###########################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_scan_results_pmi_scan_eng');
+    
+        if  @upload_id > 1 then 
+            select 'New Scan Files - PM OMR Results' as Uploader_Scan_File_PMOMR, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_bm_load_pmi_scan_eng_results()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_bm_load_pmi_scan_eng_results();
+            set v_etl_rpt_flag = 1;
+            set v_etl_bm_build_flag = 1;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_bm_load_pmi_scan_eng_results()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Scan Files - PM OMR Results' as Uploader_Scan_File_PMOMR, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No Scan Files - PM OMR Results' as Uploader_Scan_File_PMOMR;
+        end if;    
 
         ############################
         ## Run etl_bm_load_abacus ##
