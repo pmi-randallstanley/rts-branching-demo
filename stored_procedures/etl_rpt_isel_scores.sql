@@ -15,6 +15,8 @@ $Id: etl_rpt_isel_scores.sql 7380 2009-07-16 14:23:58Z randall.stanley $
 
 BEGIN
 
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
+
     select  count(*) 
     into    @view_exists
     from    information_schema.tables t
@@ -45,8 +47,6 @@ BEGIN
         
         if @missing_stu_year_count > 0 then
     
-            call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
-            
             insert ignore c_student_year (student_id, school_year_id, school_id, grade_level_id, last_user_id, create_timestamp, client_id)
             select  st.student_id
                 ,sy.school_year_id

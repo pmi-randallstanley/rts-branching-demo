@@ -14,7 +14,7 @@ COMMENT '$Rev: 9893 $ $Date: 2011-01-18 09:10:39 -0500 (Tue, 18 Jan 2011) $'
 SQL SECURITY INVOKER
 BEGIN
 
-        call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
         
         SELECT pmi_admin.pmi_f_get_next_sequence('etl_rpt_id', 1) INTO @etl_rpt_id;
     
@@ -76,6 +76,21 @@ BEGIN
         call etl_rpt_profile_bm_stu();
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_profile_bm_stu()', 'c';
                 
+        ##etl_rpt_profile_bm_subgroup_class##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_profile_bm_subgroup_class()', 'b';
+        call etl_rpt_profile_bm_subgroup_class();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_profile_bm_subgroup_class()', 'c';
+                
+        ##etl_rpt_profile_bm_subgroup_district##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_profile_bm_subgroup_district()', 'b';
+        call etl_rpt_profile_bm_subgroup_district();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_profile_bm_subgroup_district()', 'c';
+                
+        ##etl_rpt_profile_bm_subgroup_school##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_profile_bm_subgroup_school()', 'b';
+        call etl_rpt_profile_bm_subgroup_school();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_profile_bm_subgroup_school()', 'c';
+                
         ##etl_rpt_bm_summ_ayp_group_school_grade##
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_bm_summ_ayp_group_school_grade()', 'b';
         call etl_rpt_bm_summ_ayp_group_school_grade();
@@ -111,6 +126,26 @@ BEGIN
         call etl_rpt_test_curriculum_scores();
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_test_curriculum_scores()', 'c';
                 
+        ##etl_rpt_test_curriculum_scores_class##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_test_curriculum_scores_class()', 'b';
+        call etl_rpt_test_curriculum_scores_class();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_test_curriculum_scores_class()', 'c';
+                
+        ##etl_rpt_test_curriculum_scores_school##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_test_curriculum_scores_school()', 'b';
+        call etl_rpt_test_curriculum_scores_school();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_test_curriculum_scores_school()', 'c';
+                
+        ##etl_rpt_test_curriculum_scores_district##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_test_curriculum_scores_district()', 'b';
+        call etl_rpt_test_curriculum_scores_district();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_test_curriculum_scores_district()', 'c';
+                
+        ##etl_rpt_subgroup_test_curriculum_scores##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_subgroup_test_curriculum_scores()', 'b';
+        call etl_rpt_subgroup_test_curriculum_scores();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_subgroup_test_curriculum_scores()', 'c';
+                
         ##etl_rpt_ayp_accel_summ_tables##
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_ayp_accel_summ_tables()', 'b';
         call etl_rpt_ayp_accel_summ_tables();
@@ -125,6 +160,21 @@ BEGIN
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_bm_summ_ayp_stu_period()', 'b';
         call etl_rpt_bm_summ_ayp_stu_period();
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_bm_summ_ayp_stu_period()', 'c';
+
+        ##etl_rpt_rti_subgroup_scores_class##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_rti_subgroup_scores_class()', 'b';
+        call etl_rpt_rti_subgroup_scores_class();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_rti_subgroup_scores_class()', 'c';
+
+        ##etl_rpt_rti_subgroup_scores_district##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_rti_subgroup_scores_district()', 'b';
+        call etl_rpt_rti_subgroup_scores_district();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_rti_subgroup_scores_district()', 'c';
+
+        ##etl_rpt_rti_subgroup_scores_school##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_rti_subgroup_scores_school()', 'b';
+        call etl_rpt_rti_subgroup_scores_school();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_rti_subgroup_scores_school()', 'c';
 
         ##etl_rpt_isel_scores##
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_isel_scores()', 'b';

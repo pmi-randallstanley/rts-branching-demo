@@ -15,7 +15,7 @@ BEGIN
 
 declare v_date_format_mask varchar(15) default '%m/%d/%Y';
 
-call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);  
+call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
 # stage any new data - this is issued here
 # becuase this process is currently executing

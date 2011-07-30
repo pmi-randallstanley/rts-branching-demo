@@ -16,7 +16,7 @@ comment '$Rev: 8481 $ $Date: 2010-04-30 08:25:56 -0400 (Fri, 30 Apr 2010) $'
 
 proc: begin 
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set @etl_imp_id := pmi_admin.pmi_f_get_next_sequence('etl_imp_id', 1);
     set @begin_time := now();

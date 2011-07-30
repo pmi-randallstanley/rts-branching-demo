@@ -22,7 +22,7 @@ proc: begin
     declare v_assess_freq       char(1);
     declare v_assess_freq_id    int(10);
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set v_ods_table = 'pmi_ods_dibels_next';
     set v_ods_view = concat('v_', v_ods_table);

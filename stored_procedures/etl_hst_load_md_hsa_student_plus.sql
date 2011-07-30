@@ -26,7 +26,7 @@ proc: begin
     declare v_delete_count int(10);
     declare v_ltdb_date_format_mask varchar(25);
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     #########################
     ## Load Variables      ##

@@ -49,7 +49,7 @@ proc: begin
     and     active_flag = 1
     ;
     
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend); 
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
     
     # Only proceed if client is FL client, and filter metadata exists for that district
     if @state_id = v_fl_state_id and v_filter_metadata_count > 0 then

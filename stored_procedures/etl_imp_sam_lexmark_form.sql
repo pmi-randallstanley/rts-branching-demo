@@ -18,7 +18,7 @@ comment '$Rev: 8498 $ $Date: 2010-05-03 08:27:27 -0400 (Mon, 03 May 2010) $'
 
 proc: begin 
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
     
     select  count(*) 
     into    @view_exists

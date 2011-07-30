@@ -20,7 +20,7 @@ comment '$Rev: 8490 $ $Date: 2010-04-30 11:16:38 -0400 (Fri, 30 Apr 2010) $'
 
 proc: begin 
     
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     ##############################################################
     # Insert Assessment data

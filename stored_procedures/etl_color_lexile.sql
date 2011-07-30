@@ -16,7 +16,7 @@ DROP PROCEDURE IF EXISTS etl_color_lexile //
 CREATE definer=`dbadmin`@`localhost` procedure etl_color_lexile()
 BEGIN 
 
-  call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
   
   SELECT  COUNT(*) 
   INTO    @view_color

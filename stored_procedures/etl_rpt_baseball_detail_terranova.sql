@@ -21,7 +21,7 @@ proc: begin
     Declare v_school_year_id smallint(4);
     Declare v_bb_group_id int(10);
     
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     select  count(*) 
     into    v_table_exists

@@ -19,7 +19,7 @@ PROC: BEGIN
     declare v_num_round_digits  int(11) default '0';
     
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
 
     drop table if exists `tmp_bb_measure_subject_xref`;

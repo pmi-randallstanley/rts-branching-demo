@@ -17,7 +17,7 @@ comment '$Rev: 8022 $ $Date: 2009-12-14 15:27:20 -0500 (Mon, 14 Dec 2009) $'
 
 proc: begin 
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     SELECT  count(case when st.state_abbr = 'fl' then st.state_abbr end)
             ,count(case when st.state_abbr = 'ga' then st.state_abbr end)

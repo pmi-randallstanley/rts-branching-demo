@@ -19,7 +19,7 @@ proc: begin
     Declare v_ods_view varchar(50);
     Declare v_view_exists smallint(4);
     
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set v_ods_table = 'pmi_ods_ltdb_crosspoint_writing';
     set v_ods_view = 'v_pmi_ods_ltdb_crosspoint_writing';

@@ -20,7 +20,7 @@ BEGIN
 ## pmi_ods_scan_results cleanup ##
 ##################################
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     UPDATE sam_test SET
     import_xref_code = moniker

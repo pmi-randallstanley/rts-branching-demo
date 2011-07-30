@@ -22,7 +22,7 @@ BEGIN
   
     DECLARE EXIT HANDLER FOR NOT FOUND BEGIN SET @client_id = 0; SELECT 'Not a valid PMI client db.'; END;
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     #add setting 20091005 to determine if loading course_type in this process.
     SET v_use_course_type_override := pmi_f_get_etl_setting('coreCourseTypeOverride');

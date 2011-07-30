@@ -15,7 +15,7 @@ COMMENT '$Rev: 8452 $ $Date: 2010-04-21 09:06:02 -0400 (Wed, 21 Apr 2010) $'
 
 BEGIN
 
-    call set_db_vars(@client_id,@state_id,@db_name,@db_name_core,@db_name_ods,@db_name_ib,@db_name_view,@db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     select  count(*) 
     into    @table_exists

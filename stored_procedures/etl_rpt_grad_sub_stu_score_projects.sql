@@ -23,7 +23,7 @@ comment '$rev: sync etl calc col metatdata with master $'
 
 proc: begin
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
   
     truncate table rpt_grad_sub_stu_score_projects;
 

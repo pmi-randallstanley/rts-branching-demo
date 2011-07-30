@@ -11,7 +11,7 @@ proc: begin
     declare v_table_name varchar(64);
     declare v_table_exists tinyint(1);
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set v_table_name = 'pm_smi_quantile_scores';
 

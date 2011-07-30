@@ -14,7 +14,7 @@ SQL SECURITY INVOKER
 comment '$Rev: 7380 $ $Date: 2009-07-16 10:23:58 -0400 (Thu, 16 Jul 2009) $'
 BEGIN
 
-call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend); 
+call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
 select  COALESCE(cast(value as SIGNED),0) 
 into    @dibels_assess_freq_id 

@@ -23,7 +23,7 @@ PROC: BEGIN
     declare v_date_format_mask varchar(15) default '%Y-%m-%d';
     declare v_use_stu_fid_code char(1) default 'n';    
     
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
     
     set @use_stu_fid_code := pmi_f_get_etl_setting('lexileUseFIDCode');
     if @use_stu_fid_code is not null then

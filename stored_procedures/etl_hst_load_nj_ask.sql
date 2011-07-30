@@ -45,7 +45,7 @@ proc: begin
     declare continue handler for not found 
     set v_no_more_rows = true;
     
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set v_ods_table = 'pmi_ods_nj_ask';
     set v_ods_view = 'v_pmi_ods_nj_ask';

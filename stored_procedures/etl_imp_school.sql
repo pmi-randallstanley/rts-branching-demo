@@ -15,7 +15,7 @@ SQL SECURITY INVOKER
 COMMENT '$Rev: 8474 $ $Date: 2010-04-29 16:05:05 -0400 (Thu, 29 Apr 2010) $'
 BEGIN
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
     
     SET @@session.max_error_count = 0;
 

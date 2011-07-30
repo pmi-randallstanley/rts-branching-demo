@@ -21,7 +21,7 @@ proc: begin
     declare v_fcat_math_id      int(11) default '0';
     declare v_fcat_read_id      int(11) default '0';
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     select  count(*)
     into    @is_fl_client

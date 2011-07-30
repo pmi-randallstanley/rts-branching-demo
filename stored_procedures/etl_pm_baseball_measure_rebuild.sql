@@ -15,7 +15,7 @@ COMMENT '$Rev: 9435 $ $Date: 2010-10-11 16:04:34 -0400 (Mon, 11 Oct 2010) $'
 
 PROC: BEGIN 
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     drop table if exists `tmp_dyn_meas_with_scores`;
     create table `tmp_dyn_meas_with_scores` (

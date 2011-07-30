@@ -18,7 +18,7 @@ proc: begin
     declare v_ods_table varchar(64);
     declare v_date_format_mask varchar(15) default '%y%y';
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set v_ods_table = 'pmi_ods_pmrn';
 

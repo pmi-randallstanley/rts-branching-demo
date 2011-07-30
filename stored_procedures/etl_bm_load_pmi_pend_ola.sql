@@ -16,7 +16,7 @@ comment '$Rev: 7981 $ $Date: 2009-12-09 09:47:32 -0500 (Wed, 09 Dec 2009) $'
 
 proc: begin 
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set @bmDoesNotSendCRScanResults := pmi_f_get_etl_setting('bmDoesNotSendCRScanResults');
 

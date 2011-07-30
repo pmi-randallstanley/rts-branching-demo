@@ -25,7 +25,7 @@ BEGIN
 
     truncate table rpt_nclb_group_enroll_acc_grade;
     truncate TABLE rpt_nclb_group_results_acc_grade;
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
     
     # school level
     insert rpt_nclb_group_enroll_acc_grade (accessor_id, ayp_group_id, grade_level_id, school_year_id

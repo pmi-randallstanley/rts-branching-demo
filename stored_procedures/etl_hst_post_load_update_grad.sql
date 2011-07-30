@@ -16,7 +16,7 @@ comment '$Rev: 8513 $ $Date: 2010-05-05 13:03:34 -0400 (Wed, 05 May 2010) $'
 
 proc: begin 
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     drop table if exists `tmp_grad_status`;
     drop table if exists `tmp_test_type_grad_info`;

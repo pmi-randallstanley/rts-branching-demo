@@ -30,7 +30,7 @@ BEGIN
               
     Declare continue handler for sqlstate '02000' set done = 0;
             
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     set @ods_table := 'pmi_ods_nj_hspa';
     set @ods_view := 'v_pmi_ods_nj_hspa';
