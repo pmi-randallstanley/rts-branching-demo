@@ -18,7 +18,7 @@ SQL SECURITY INVOKER
 BEGIN 
 
 
-    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend);
+    call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
     select  count(*) 
     into    @table_exists
@@ -163,7 +163,7 @@ BEGIN
            ,at.question_code as import_xref_code
            ,1 as section_num
            ,at.flatfile_question_number as section_question_num
-           ,CASE WHEN at.answer IN ('L','S') THEN @bcr_question_type_id ELSE @sr_question_type_id END as question_type_id
+           ,CASE WHEN at.answer IN ('L','R','S') THEN @bcr_question_type_id ELSE @sr_question_type_id END as question_type_id
            ,coalesce(r.rubric_id, 1000002) as rubric_id
            ,CONCAT('1-',at.question_code) as question_label
            ,at.flatfile_question_number as flatfile_question_num
