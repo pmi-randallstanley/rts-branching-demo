@@ -51,7 +51,9 @@ proc: begin
                 ,current_timestamp as create_timestamp
             from v_pmi_ods_grad_sub_req_proj v
             join    c_ayp_subject c
-                    on  v.ayp_subject_code = c.ayp_subject_code;
+                    on      v.ayp_subject_code = c.ayp_subject_code
+                    and     c.ayp_subject_code != 'hsaGovernment'   ########### Fix for transition away from HSA Government
+            ;
         
             #Cleanup and post processing
         

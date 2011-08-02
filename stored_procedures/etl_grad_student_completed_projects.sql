@@ -36,7 +36,7 @@ proc: begin
             drop table if exists tmp_grad_stu_comp_proj;
 
             create table tmp_grad_stu_comp_proj (
-                `student_sis_code` int(11) not null
+                `student_sis_code` varchar(15) not null
                 ,`ayp_subject_code` varchar(20) not null
                 ,comp_projects smallint(3)
                 ,primary key (student_sis_code, ayp_subject_code)
@@ -74,6 +74,7 @@ proc: begin
                 from v_pmi_ods_grad_stu_comp_proj
                 where hsa_english_comp_projects is not null
                 
+                /*  HSA Government is no longer part of bridge projects.
                 union all
                 
                 select student_sis_code
@@ -81,6 +82,7 @@ proc: begin
                     ,hsa_government_comp_projects as comp_projects
                 from v_pmi_ods_grad_stu_comp_proj
                 where hsa_government_comp_projects is not null
+                */
             ) as ods
             on duplicate key update comp_projects = values(comp_projects)
             ;

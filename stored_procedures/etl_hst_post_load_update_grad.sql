@@ -11,7 +11,7 @@ drop procedure if exists etl_hst_post_load_update_grad//
 create definer=`dbadmin`@`localhost` procedure etl_hst_post_load_update_grad()
 contains sql
 sql security invoker
-comment '$Rev: 8513 $ $Date: 2010-05-05 13:03:34 -0400 (Wed, 05 May 2010) $'
+comment '$Rev: 8513 $ $Date: 2010-08-02$'
 
 
 proc: begin 
@@ -72,6 +72,7 @@ proc: begin
     join    c_ayp_subject as sub
             on      tt.ayp_test_type_id = sub.ayp_test_type_id
             and     sub.grad_report_flag = 1
+            and     sub.ayp_subject_code != 'hsaGovernment'   ########### For transition away from HSA Government
     group by tt.ayp_test_type_id
     ;
 
@@ -101,6 +102,7 @@ proc: begin
     from    c_student stu
     cross join c_ayp_subject as sub
             on      sub.grad_report_flag = 1
+            and     sub.ayp_subject_code != 'hsaGovernment'   ########### Fix for transition away from HSA Government
     left join c_grad_subject_student_projects as gssp
             on      stu.student_id = gssp.student_id
             and     sub.ayp_subject_id = gssp.ayp_subject_id
@@ -156,6 +158,71 @@ proc: begin
                                         else @did_not_meet_id
                                 end 
     ;
+    
+    #############  TEMP Fix for HSA Government.  Basically, HSA Government is not being administered anymore.  However, the students that have taken this
+    #############  test can still be considered to meet grad requirements if they have achieved a 1602 score with the HSA Govt score
+    
+    update c_student stu
+    join (
+            select tmp.student_id
+                  , sum(tmp.ayp_score) as composite_score_all_subjects
+                  #, sum(case when cas.ayp_subject_code = 'hsaGovernment' then 0 else tmp.ayp_score end) as composite_score_non_govt
+            from  ( select  s.student_id
+                            , cass.ayp_subject_id
+                            , max(ayp_score) as ayp_score
+                    from  c_student s
+                    join  c_ayp_subject_student cass
+                          on      s.student_id = cass.student_id
+                    join  c_ayp_subject cas
+                          on      cass.ayp_subject_id = cas.ayp_subject_id 
+                          and     cas.grad_report_flag = 1
+                    where s.grad_eligible_flag = 1
+                      and s.grad_reqs_met_flag = 0
+                    group by s.student_id, cass.ayp_subject_id ) as tmp
+            join  c_ayp_subject cas
+                  on    tmp.ayp_subject_id = cas.ayp_subject_id
+            join  c_student s on tmp.student_id = s.student_id
+            group by tmp.student_id
+            having sum(tmp.ayp_score) >= 1602 and sum(case when cas.grad_report_flag = 1 then 1 else 0 end) = 4
+          ) dt on stu.student_id = dt.student_id
+    set   stu.grad_reqs_met_flag = 1
+          , stu.grad_comp_score = dt.composite_score_all_subjects
+          , stu.grad_status_id = @combined_id
+    ;
+    
+    
+    ### One final temp fix for hsa govt situation.  If a student has not met grad requirements, the composite score = composite_score - hsa min composite score (1208)
+    ###  We basically want to change this so we show the greater of the following
+    ###     sum(algebra, bio, english) - 1602 or sum (algebra, bio, english and govt) - 1208
+
+    update c_student stu
+    join (
+            select tmp.student_id
+                  , s.grad_comp_score
+                  , sum(tmp.ayp_score) as composite_score_all_subjects
+                  , sum(tmp.ayp_score) - 1602 as needed_points_old 
+                  , sum(case when cas.ayp_subject_code = 'hsaGovernment' then 0 else tmp.ayp_score end) as composite_score_non_govt
+                  , sum(case when cas.ayp_subject_code = 'hsaGovernment' then 0 else tmp.ayp_score end) - 1208 as needed_points_new 
+            from  ( select  s.student_id
+                            , cass.ayp_subject_id
+                            , max(ayp_score) as ayp_score
+                    from  c_student s
+                    join  c_ayp_subject_student cass
+                          on      s.student_id = cass.student_id
+                    join  c_ayp_subject cas
+                          on      cass.ayp_subject_id = cas.ayp_subject_id 
+                          and     cas.grad_report_flag = 1
+                    where s.grad_eligible_flag = 1
+                      and s.grad_reqs_met_flag = 0
+                    group by s.student_id, cass.ayp_subject_id ) as tmp
+            join  c_ayp_subject cas
+                  on    tmp.ayp_subject_id = cas.ayp_subject_id
+            join  c_student s on tmp.student_id = s.student_id
+            group by tmp.student_id
+          ) dt on stu.student_id = dt.student_id
+    set   stu.grad_comp_score = case when dt.needed_points_new > dt.needed_points_old then dt.needed_points_new else dt.needed_points_old end
+    ;
+    
 
     #Clean-up and post processing
     drop table if exists `tmp_grad_status`;

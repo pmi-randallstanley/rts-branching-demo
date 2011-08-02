@@ -55,6 +55,7 @@ proc: begin
             from    c_student stu
             cross join  c_ayp_subject as sub
                     on      sub.grad_report_flag = 1
+                    and     sub.ayp_subject_code != 'hsaGovernment'   ########### Fix for transition away from HSA Government
             left join   c_grad_subject_student_projects as gssp
                     on      stu.student_id = gssp.student_id
                     and     sub.ayp_subject_id = gssp.ayp_subject_id
