@@ -137,7 +137,27 @@ proc: begin
         ,1234
     
     from    rpt_profile_bm_subgroup_district as rpbsd
+    where   rpbsd.ayp_curriculum_id != rpbsd.ayp_subject_id
+    and     rpbsd.ayp_curriculum_id != rpbsd.ayp_strand_id
     group by rpbsd.ayp_subject_id, rpbsd.ayp_strand_id, rpbsd.ayp_group_id
+    on duplicate key update bm_01_pe = bm_01_pe + values(bm_01_pe)
+        ,bm_01_pp = bm_01_pp + values(bm_01_pp)
+        ,bm_02_pe = bm_02_pe + values(bm_02_pe)
+        ,bm_02_pp = bm_02_pp + values(bm_02_pp)
+        ,bm_03_pe = bm_03_pe + values(bm_03_pe)
+        ,bm_03_pp = bm_03_pp + values(bm_03_pp)
+        ,bm_04_pe = bm_04_pe + values(bm_04_pe)
+        ,bm_04_pp = bm_04_pp + values(bm_04_pp)
+        ,bm_05_pe = bm_05_pe + values(bm_05_pe)
+        ,bm_05_pp = bm_05_pp + values(bm_05_pp)
+        ,bm_06_pe = bm_06_pe + values(bm_06_pe)
+        ,bm_06_pp = bm_06_pp + values(bm_06_pp)
+        ,bm_07_pe = bm_07_pe + values(bm_07_pe)
+        ,bm_07_pp = bm_07_pp + values(bm_07_pp)
+        ,bm_08_pe = bm_08_pe + values(bm_08_pe)
+        ,bm_08_pp = bm_08_pp + values(bm_08_pp)
+        ,total_pe = total_pe + values(total_pe)
+        ,total_pp = total_pp + values(total_pp)
     ;
 
     # add subject level aggs
@@ -194,6 +214,24 @@ proc: begin
     from    rpt_profile_bm_subgroup_district as rpbsd
     where   rpbsd.ayp_curriculum_id = rpbsd.ayp_strand_id
     group by rpbsd.ayp_subject_id, rpbsd.ayp_group_id
+    on duplicate key update bm_01_pe = bm_01_pe + values(bm_01_pe)
+        ,bm_01_pp = bm_01_pp + values(bm_01_pp)
+        ,bm_02_pe = bm_02_pe + values(bm_02_pe)
+        ,bm_02_pp = bm_02_pp + values(bm_02_pp)
+        ,bm_03_pe = bm_03_pe + values(bm_03_pe)
+        ,bm_03_pp = bm_03_pp + values(bm_03_pp)
+        ,bm_04_pe = bm_04_pe + values(bm_04_pe)
+        ,bm_04_pp = bm_04_pp + values(bm_04_pp)
+        ,bm_05_pe = bm_05_pe + values(bm_05_pe)
+        ,bm_05_pp = bm_05_pp + values(bm_05_pp)
+        ,bm_06_pe = bm_06_pe + values(bm_06_pe)
+        ,bm_06_pp = bm_06_pp + values(bm_06_pp)
+        ,bm_07_pe = bm_07_pe + values(bm_07_pe)
+        ,bm_07_pp = bm_07_pp + values(bm_07_pp)
+        ,bm_08_pe = bm_08_pe + values(bm_08_pe)
+        ,bm_08_pp = bm_08_pp + values(bm_08_pp)
+        ,total_pe = total_pe + values(total_pe)
+        ,total_pp = total_pp + values(total_pp)
     ;
 
     update  rpt_profile_bm_subgroup_district
