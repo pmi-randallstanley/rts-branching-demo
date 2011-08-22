@@ -133,6 +133,7 @@ proc: begin
             ,swatch_id
             ,score_sort_type_code
             ,active_flag
+            ,dynamic_creation_flag
             ,last_user_id
             ,create_timestamp
         )
@@ -146,6 +147,7 @@ proc: begin
             ,@swatch_id
             ,'n'
             ,0
+            ,1
             ,1234
             ,now()
 
