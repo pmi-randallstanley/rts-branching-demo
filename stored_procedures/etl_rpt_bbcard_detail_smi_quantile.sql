@@ -8,8 +8,10 @@ comment '$Rev$ $Date$'
 
 proc: begin 
 
-    declare v_table_name varchar(64);
-    declare v_table_exists tinyint(1);
+    declare v_table_name    varchar(64);
+    declare v_table_exists  tinyint(1);
+    declare v_bb_group_id   int(11);
+    declare v_swatch_id     int(11);
 
     call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
 
@@ -59,19 +61,19 @@ proc: begin
         ;
 
         select  bb_group_id
-        into    @bb_group_id
+        into    v_bb_group_id
         from    pm_bbcard_group
         where   bb_group_code = 'smiQuantile'
         ;
 
         select  swatch_id
-        into    @swatch_id
+        into    v_swatch_id
         from    c_color_swatch
         where   swatch_code = 'smiQuantile'
         ;
 
         insert tmp_test_list ( test_name, bb_group_id )
-        select  test_moniker, @bb_group_id
+        select  test_moniker, v_bb_group_id
         from    pm_smi_quantile_scores
         group by test_moniker
         ;
@@ -79,10 +81,10 @@ proc: begin
 
         # Get id's for new measures
         insert  tmp_id_assign_bb_meas (bb_group_id, new_id, base_code, moniker)
-        select  @bb_group_id, pmi_admin.pmi_f_get_next_sequence('pm_bbcard_measure', 1), src.test_name, src.test_name
+        select  v_bb_group_id, pmi_admin.pmi_f_get_next_sequence('pm_bbcard_measure', 1), src.test_name, src.test_name
         from    tmp_test_list as src
         left join   pm_bbcard_measure as tar
-                on      tar.bb_group_id = @bb_group_id
+                on      tar.bb_group_id = v_bb_group_id
                 and     tar.bb_measure_code = src.test_name
         where   tar.bb_measure_id is null
         ;      
@@ -105,7 +107,7 @@ proc: begin
             ,tmpid.base_code
             ,tmpid.moniker
             ,0
-            ,@swatch_id
+            ,v_swatch_id
             ,1
             ,1
             ,1234
@@ -135,7 +137,7 @@ proc: begin
             ,'ignore'
             ,'Ignore Item'
             ,0
-            ,@swatch_id
+            ,v_swatch_id
             ,'n'
             ,0
             ,1234
@@ -144,7 +146,7 @@ proc: begin
 
         from    tmp_test_list as src
         join    pm_bbcard_measure as bm
-                on      bm.bb_group_id = @bb_group_id
+                on      bm.bb_group_id = v_bb_group_id
                 and     bm.bb_measure_code = src.test_name
         left join   pm_bbcard_measure_item as tar
                 on      tar.bb_group_id = bm.bb_group_id
