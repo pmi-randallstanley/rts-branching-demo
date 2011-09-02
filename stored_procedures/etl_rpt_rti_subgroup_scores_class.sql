@@ -33,22 +33,19 @@ proc: begin
     select  si.measure_id
         ,si.intervention_id
         ,cle.class_id
-        ,date(sie.event_timestamp) as event_date
+        ,sipml.event_date
         ,ag.ayp_group_id
-        ,sum(sie.score) as pe
-        ,sum(si.goal) as pp
-        ,min(sie.school_year_id) as school_year_id
+        ,sum(sipml.score) as pe
+        ,sum(si.goal_score) as pp
+        ,min(sipml.school_year_id) as school_year_id
         ,1234
     
-    from    c_student_intervention_event as sie
-    join    c_student_intervention as si
-            on      sie.student_id = si.student_id
-            and     sie.measure_id = si.measure_id
-            and     sie.intervention_id = si.intervention_id
-            and     sie.intervention_item_id = si.intervention_item_id
+    from    c_rti_student_interv_prog_mon_list as sipml
+    join    c_rti_student_interv as si
+            on      sipml.intervention_item_id = si.intervention_item_id
     join    c_student_year as sty
             on      sty.student_id = si.student_id
-            and     sty.school_year_id = sie.school_year_id
+            and     sty.school_year_id = sipml.school_year_id
             and     sty.active_flag = 1
     join    rpt_student_group as rsg
             on      si.student_id = rsg.student_id
