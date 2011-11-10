@@ -4,6 +4,7 @@ $Author: randall.stanley $
 $Date: 2010-10-03 14:10:23 -0400 (Sun, 03 Oct 2010) $
 $HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Redwood/Core/stored_procedures/etl_bm_load_turning_results.sql $
 $Id: etl_bm_load_turning_results.sql 9335 2010-10-03 18:10:23Z randall.stanley $ 
+##  Update: Aug 17, 2011:  Changed the code to treat response value as ordinal position, not actual value ##
 */
 
 DROP PROCEDURE IF EXISTS etl_bm_load_turning_results //
@@ -96,9 +97,9 @@ BEGIN
                 ,ak.test_question_id
                 ,case 
                   when sm.scoring_method_code = 'c' then null 
-                  else sr.response_value end
+                  else coalesce(i.answer_subset_item_code,sr.response_value) end
                 ,case 
-                  when sm.scoring_method_code in ('s','g') and sr.response_value = ak.answer then 1 
+                  when sm.scoring_method_code in ('s','g') and coalesce(i.answer_subset_item_code,sr.response_value) = ak.answer then 1 
                   when sm.scoring_method_code in ('s','g') then 0 
                   else sr.points_earned end
                  ,1234
@@ -106,6 +107,7 @@ BEGIN
         FROM    v_pmi_ods_scan_results_turning AS sr
         JOIN    sam_test as t 
                 ON t.test_id = sr.pm_test_id
+                and t.owner_id = sr.pm_district_id
         JOIN    c_student AS s 
                 ON s.student_code = sr.student_code
         JOIN    sam_test_event AS te  
@@ -116,7 +118,15 @@ BEGIN
         JOIN    sam_question_type AS qt 
                 ON ak.question_type_id = qt.question_type_id
         JOIN    sam_scoring_method AS sm 
-                ON qt.scoring_method_id = sm.scoring_method_id
+                ON qt.scoring_method_id = sm.scoring_method_id         
+        LEFT JOIN    sam_answer_set a
+                ON ak.answer_set_id = a.answer_set_id
+        LEFT JOIN    sam_answer_subset sub
+                ON a.answer_set_id = sub.answer_set_id
+                and ak.answer_subset_id = sub.answer_subset_id
+        LEFT JOIN    sam_answer_subset_item i
+                ON sub.answer_subset_id = i.answer_subset_id
+                and sr.response_value = i.item_ordinal
         LEFT JOIN  sam_student_response AS er     
                 ON er.test_id = t.test_id    
                 AND  er.test_event_id = te.test_event_id    
