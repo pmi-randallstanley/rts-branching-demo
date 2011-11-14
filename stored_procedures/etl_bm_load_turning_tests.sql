@@ -37,12 +37,15 @@ BEGIN
 
         drop table if exists tmp_ak_insert;
         
+/*
         SELECT  MIN(CASE WHEN question_type_code = 'SR' THEN question_type_id END)
                ,MIN(CASE WHEN question_type_code = 'BCR' THEN question_type_id END)
         INTO     @sr_question_type_id
                 ,@bcr_question_type_id
         FROM  sam_question_type
         WHERE question_type_code in ('SR', 'BCR');
+
+*/
 
         select  external_answer_source_id
         into    @external_answer_source_id
@@ -111,14 +114,6 @@ BEGIN
                and at.user_id = t.owner_id
                and at.pm_test_id is null;
 
-        INSERT sam_test_event (test_id, test_event_id, online_scoring_flag, start_date, end_date, admin_period_id, purge_flag, client_id, last_user_id, create_timestamp)
-        SELECT  tmp1.test_id, pmi_f_get_next_sequence_app_db('sam_test_event', 1), 0, now(), null, 1000001, 0, tmp1.client_id, 1234, now()
-        FROM    tmp_test_list as tmp1
-        LEFT JOIN   sam_test_event as te
-                ON      te.test_id = tmp1.test_id
-                AND     te.purge_flag = 0
-        WHERE   te.test_event_id is null
-        ;
 
         ##################################
         ## Build the Answer Keys
@@ -127,24 +122,26 @@ BEGIN
         CREATE TABLE tmp_ak_insert
         SELECT DISTINCT t.test_id
            ,pmi_f_get_next_sequence_app_db('sam_answer_key', 1) as test_question_id
-           ,at.question_code as import_xref_code
+           ,odsak.question_code as import_xref_code
            ,1 as section_num
-           ,at.flatfile_question_number as section_question_num
-           ,@sr_question_type_id as question_type_id
+           ,odsak.flatfile_question_number as section_question_num
+           ,qt.question_type_id
            ,coalesce(r.rubric_id, 1000002) as rubric_id
-           ,CONCAT('1-',at.question_code) as question_label
-           ,at.flatfile_question_number as flatfile_question_num
-           ,at.answer AS answer
+           ,CONCAT('1-',odsak.question_code) as question_label
+           ,odsak.flatfile_question_number as flatfile_question_num
+           ,odsak.answer AS answer
            ,c.curriculum_id
         FROM   (SELECT distinct test_name, user_id, question_number as flatfile_question_number, cast(points_possible as signed) as points_possible, correct_answer as answer, question_number as question_code, question_type, standard_guid
-             FROM v_pmi_ods_turning_test_ak) AS  at
+             FROM v_pmi_ods_turning_test_ak) AS  odsak
         JOIN    sam_test AS t   
-          ON      at.test_name = t.import_xref_code
-          AND     at.user_id = t.owner_id
+          ON      odsak.test_name = t.import_xref_code
+          AND     odsak.user_id = t.owner_id
+        join    sam_question_type as qt
+                on      odsak.question_type = qt.question_type_code
         left join    sam_rubric AS r
-          on      r.moniker = concat('turning_', at.points_possible,' Point (', at.points_possible,')')
+          on      r.moniker = concat('turning_', odsak.points_possible,' Point (', odsak.points_possible,')')
         left join    sam_curriculum c
-          on      c.import_guid = at.standard_guid
+          on      c.import_guid = odsak.standard_guid
         WHERE NOT EXISTS (SELECT * FROM sam_answer_key ak WHERE ak.test_id = t.test_id);
         
 
