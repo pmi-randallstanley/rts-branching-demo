@@ -8,8 +8,8 @@ BEGIN
     INSERT INTO c_rti_student_interv_prog_mon_list_au 
         
     SET     intervention_item_id = NEW.intervention_item_id
-            ,prog_mon_id = IF(NEW.prog_mon_id != OLD.prog_mon_id, OLD.prog_mon_id, NULL)
-            ,event_date = IF(NEW.event_date != OLD.event_date, OLD.event_date, NULL)
+            ,prog_mon_id = NEW.prog_mon_id
+            ,event_date = OLD.event_date
             ,score = IF(NEW.score != OLD.score, OLD.score, NULL)
             ,action_code = 'u'
             ,audit_user_id = NEW.last_user_id
