@@ -657,6 +657,23 @@ SQL SECURITY INVOKER
             select 'No Color File - SMI Quantile' as Uploader_Color_SMI_Quantile;
         end if;    
 
+        #########################
+        ## Run etl_color_cogat ##
+        #########################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_color_cogat');
+    
+        if  @upload_id > 1 then 
+            select 'New Color File - CogAT' as Uploader_Color_CogAT, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_cogat()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_color_cogat();
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_cogat()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Color File - CogAT' as Uploader_Color_CogAT, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No Color File - CogAT' as Uploader_Color_CogAT;
+        end if;    
+
         ################################
         ## Run etl_imp_ayp_enrollment ##
         ################################
@@ -1558,6 +1575,26 @@ SQL SECURITY INVOKER
             select 'New PMRN Scores' AS PMRN_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
         else
             select 'No PMRN Scores' AS PMRN_Scores;
+        end if;        
+
+        ##############################
+        ## CogAT Scores
+        ##############################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_cogat');
+        
+        if  @upload_id > 1 then
+            select 'New CogAT Scores' AS CogAT_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_cogat()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+        
+            call etl_rpt_bbcard_detail_cogat();
+            set v_etl_baseball_rebuild_flag = 1;
+        
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_cogat()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New CogAT Scores' AS CogAT_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else
+            select 'No CogAT Scores' AS CogAT_Scores;
         end if;        
 
         ##############################
