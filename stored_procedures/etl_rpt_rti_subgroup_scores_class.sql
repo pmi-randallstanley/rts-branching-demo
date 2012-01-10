@@ -35,8 +35,8 @@ proc: begin
         ,cle.class_id
         ,sipml.event_date
         ,ag.ayp_group_id
-        ,sum(sipml.score) as pe
-        ,sum(si.goal_score) as pp
+        ,sum(coalesce(sipml.score, 0)) as pe
+        ,sum(coalesce(si.goal_score, 0)) as pp
         ,min(sipml.school_year_id) as school_year_id
         ,1234
     
