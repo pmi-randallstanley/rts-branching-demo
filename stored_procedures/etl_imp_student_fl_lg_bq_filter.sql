@@ -1,3 +1,4 @@
+delimiter //
 /*
 $Rev: 9932 $ 
 $Author: randall.stanley $ 
@@ -23,7 +24,25 @@ proc: begin
     declare v_value_text_yes              varchar(50);
     declare v_value_text_no               varchar(50);
     declare v_value_text_unknown          varchar(50);
+    declare v_school_id_cur               int(10);
+    declare v_curr_yr_grade_code_cur      varchar(15);
+    declare v_ayp_subject_id_cur          int(10);
+    declare v_count_holder                smallint;
+    declare v_dev_score_cutoff            decimal(9,3);
+    declare no_more_rows                  boolean;           
     
+        
+    declare cur_1 cursor for 
+    select  tmp.school_id, tmp.curr_yr_grade_code, tmp.ayp_subject_id
+    from    tmp_student_math_read_lg_bq tmp
+    join    c_ayp_subject sub on tmp.ayp_subject_id = sub.ayp_subject_id
+    where   sub.ayp_subject_code in ('fcatMath','fcatReading') 
+      and   tmp.fcat_yr_dev_score is not null
+    group by tmp.school_id, tmp.curr_yr_grade_code, tmp.ayp_subject_code
+    order by tmp.school_id, tmp.curr_yr_grade_code, tmp.ayp_subject_code;
+    
+    declare continue handler for not found 
+    set no_more_rows = true;
         
     # Get state code for FL.  We won't process anything unless we're in FL
     select  state_id
@@ -61,6 +80,7 @@ proc: begin
     
         drop table if exists `tmp_student_math_read_lg_bq`;
         drop table if exists `tmp_student_lg_bq`;
+        drop table if exists `tmp_school_subject_grade_ranking`;
         
         CREATE TABLE `tmp_student_math_read_lg_bq` (
           `student_id` int(10) NOT NULL,
@@ -93,6 +113,17 @@ proc: begin
           `reading_bq` varchar(25) default NULL,
           PRIMARY KEY (`student_id`),
           UNIQUE KEY `uq_tmp_student_lg_bq` (`student_code`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=latin1
+        ;
+  
+  
+        CREATE TABLE `tmp_school_subject_grade_ranking` (
+          `school_id` int(10) NOT NULL,
+          `curr_yr_grade_code` varchar(15) NOT NULL,
+          `ayp_subject_id` int(10) NOT NULL,
+          `fcat_yr_dev_score` decimal(9,3) default NULL,
+          `ranking` int(10) default NULL,
+          PRIMARY KEY (`school_id`,`curr_yr_grade_code`,`ayp_subject_id`,`fcat_yr_dev_score`)
         ) ENGINE=InnoDB DEFAULT CHARSET=latin1
         ;
         
@@ -242,7 +273,7 @@ proc: begin
         ######################################################################################
         # Flag Lower Quartile Students per School, Grade, Subject (Reading/Math only)
         ######################################################################################
-    
+/*    
         #fcat reading
         update tmp_student_math_read_lg_bq t
           join (
@@ -322,6 +353,61 @@ proc: begin
             t.bq_flag = case  when t2.percentile >= 75 then 1  
                                       else 0        
                                   end; 
+*/
+
+    
+        # New logic to calculate bottom quartile.  Basically, we are to count only the unique scores by school, subject and grade
+        #   Then get the score that is at the 25 percentile (round up - getting more is better than getting less)
+        #   Then include everyone in the school, subject and grade that are <= that score
+        #   BQ only applies to Math and Reading.
+        open cur_1;
+        loop_cur_1: loop
+        
+            fetch  cur_1 
+            into   v_school_id_cur, v_curr_yr_grade_code_cur, v_ayp_subject_id_cur;
+
+            if no_more_rows then
+                close cur_1;
+                leave loop_cur_1;
+            end if;
+            
+            delete from tmp_school_subject_grade_ranking;
+            
+            SET @row_num := 0;
+            insert into tmp_school_subject_grade_ranking (school_id, curr_yr_grade_code, ayp_subject_id, fcat_yr_dev_score, ranking)
+            select school_id, curr_yr_grade_code, ayp_subject_id, fcat_yr_dev_score, (@row_num := @row_num + 1) AS row_num
+            from tmp_student_math_read_lg_bq
+            where school_id = v_school_id_cur
+              and curr_yr_grade_code = v_curr_yr_grade_code_cur
+              and ayp_subject_id = v_ayp_subject_id_cur
+            group by school_id, curr_yr_grade_code, ayp_subject_id, fcat_yr_dev_score
+            order by 4;
+          
+            #Get cutoff for the bottom 25%.  Round up - it's better to have more than less
+            select ceiling(count(*) *.25) into v_count_holder  
+            from   tmp_school_subject_grade_ranking;
+           
+            #Get cutoff score
+            select  fcat_yr_dev_score into v_dev_score_cutoff
+            from    tmp_school_subject_grade_ranking
+            where   ranking = v_count_holder
+            ;
+            
+            update tmp_student_math_read_lg_bq tmp
+            set     tmp.bq_flag =
+                      case 
+                        when fcat_yr_dev_score <= v_dev_score_cutoff then 1
+                        else 0
+                      end
+            where   tmp.ayp_subject_id = v_ayp_subject_id_cur
+              and   tmp.school_id = v_school_id_cur
+              and   tmp.curr_yr_grade_code = v_curr_yr_grade_code_cur
+            ;
+            
+            
+            
+            
+        end loop loop_cur_1;
     
         ###############################################################################################################
         # Populate denormalized table tmp_student_lg_bq
@@ -380,6 +466,7 @@ proc: begin
         
         # Clean up
         drop table if exists `tmp_student_math_read_lg_bq`;
+        drop table if exists `tmp_school_subject_grade_ranking`;
     
     end if; #if state = fl and filter metadata exists
 
