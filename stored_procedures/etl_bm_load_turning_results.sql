@@ -470,7 +470,7 @@ BEGIN
                     and     upd.test_question_id = akg.test_question_id
             set     upd.student_answer_numeric_char = 
                     case when upd.numerator_value is not null and upd.denominator_value != 0 then round(upd.numerator_value/upd.denominator_value, akg.round_digits) 
-                            when upd.student_answer_raw regexp '[^0-9.-]+' = 0 and upd.student_answer_raw != '.' and upd.student_answer_raw regexp '\\.+.*\\.+' = 0 then upd.student_answer_raw
+                            when upd.student_answer_raw regexp '[^0-9.-]+' = 0 and upd.student_answer_raw != '.' and upd.student_answer_raw != '-' and upd.student_answer_raw regexp '\\.+.*\\.+' = 0 then upd.student_answer_raw
                             else null
                     end
             ;
