@@ -19,7 +19,7 @@ BEGIN
             ,subject_text = IF(NEW.subject_text != OLD.subject_text, OLD.subject_text, NULL)
             ,baseline_score = IF(NEW.baseline_score != OLD.baseline_score, OLD.baseline_score, NULL)
             ,goal_score = IF(NEW.goal_score != OLD.goal_score, OLD.goal_score, NULL)
-            ,goal_date = IF(NEW.goal_score != OLD.goal_score, OLD.goal_score, NULL)
+            ,goal_date = IF(NEW.goal_date != OLD.goal_date, OLD.goal_date, NULL)
             ,completion_date = IF(NEW.completion_date != OLD.completion_date, OLD.completion_date, NULL)
             ,interv_user_id = IF(NEW.interv_user_id != OLD.interv_user_id, OLD.interv_user_id, NULL)
             ,remarks = IF(NEW.remarks != OLD.remarks, OLD.remarks, NULL)
