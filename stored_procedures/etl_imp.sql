@@ -1484,14 +1484,14 @@ SQL SECURITY INVOKER
         if  @upload_id > 1 then
             select 'New NWEA Scores' AS NWEA_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
             insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
-            select @etl_imp_id, @client_id, 'etl_pm_state_test_scores_nwea()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_nwea()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
         
-            call etl_pm_state_test_scores_nwea();
+            call etl_rpt_bbcard_detail_nwea();
             # set v_etl_rpt_flag = 1;
             # set v_etl_pm_flag = 1;
         
             insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
-            select @etl_imp_id, @client_id, 'etl_pm_state_test_scores_nwea()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_nwea()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
             select 'New NWEA Scores' AS NWEA_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
         else
             select 'No NWEA Scores' AS NWEA_Scores;
