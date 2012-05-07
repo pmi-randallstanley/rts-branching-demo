@@ -1487,8 +1487,7 @@ SQL SECURITY INVOKER
             select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_nwea()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
         
             call etl_rpt_bbcard_detail_nwea();
-            # set v_etl_rpt_flag = 1;
-            # set v_etl_pm_flag = 1;
+            set v_etl_baseball_rebuild_flag = 1;
         
             insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
             select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_nwea()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
