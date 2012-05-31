@@ -202,7 +202,7 @@ PROC: BEGIN
                 ,asubst2.student_id
                 ,asubst2.school_year_id
                 ,asubst2.alt_ayp_score
-                ,asubst2.ayp_score_color
+                ,asubst2.alt_ayp_score_color
                 ,asubst2.score_type_code
                 ,1234
                 ,CURRENT_TIMESTAMP

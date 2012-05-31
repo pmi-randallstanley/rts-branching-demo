@@ -22,6 +22,14 @@ BEGIN
             ,goal_date = NEW.goal_date
             ,completion_date = NEW.completion_date
             ,interv_user_id = NEW.interv_user_id
+            ,unit_of_meas = NEW.unit_of_meas
+            ,frequency = NEW.frequency
+            ,duration = NEW.duration
+            ,group_size = NEW.group_size
+            ,attendance = NEW.attendance
+            ,delivery = NEW.delivery
+            ,student_response = NEW.student_response
+            ,student_status = NEW.student_status
             ,remarks = NEW.remarks
             ,school_year_id = NEW.school_year_id
             ,client_id = NEW.client_id
