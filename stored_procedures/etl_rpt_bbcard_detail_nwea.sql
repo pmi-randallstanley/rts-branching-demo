@@ -56,6 +56,7 @@ proc: begin
         end if;
         
         drop table if exists `tmp_stu_admin`;
+        drop table if exists `tmp_stu_admin_dups`;
         drop table if exists `tmp_date_conversion`;
         drop table if exists `tmp_student_year_backfill`;
         drop table if exists `tmp_id_assign_bb_meas`;
@@ -64,7 +65,7 @@ proc: begin
         drop table if exists `tmp_pm_bbcard_measure_item`;
         drop table if exists `tmp_pm_bbcard_measure_item_base_explode`;
         
-          create table `tmp_stu_admin` (
+        create table `tmp_stu_admin` (
           `student_code` varchar(15) NOT NULL,
           `row_num` int(10) NOT NULL,
           `test_name` varchar(75) default null,
@@ -75,15 +76,27 @@ proc: begin
           `grade_id` int(10) default null,
           `school_code` varchar(15) default null,
           `backfill_needed_flag` tinyint(1),
-          primary key (`student_id`, `test_name`, `grade_code`, `school_year_id`)
+          primary key (`student_id`, `test_name`, `grade_code`, `school_year_id`),
+          unique key `uq_tmp_stu_admin` (`student_code`, `school_year_id`)
+        ) engine=innodb default charset=latin1
+        ;
+
+        create table `tmp_stu_admin_dups` (
+          `student_code` varchar(15) NOT NULL,
+          `test_name` varchar(75) default null,
+          `school_year_id` smallint(4) NOT NULL,
+          `test_start_date` date default null,
+          `test_start_date_str`  varchar(20) NOT NULL,
+          `row_num` int(10) default NULL,
+          unique key `uq_tmp_stu_admin_dups` (`student_code`, `test_name`,`school_year_id`)
         ) engine=innodb default charset=latin1
         ;
         
         create table `tmp_date_conversion` (
-           `test_start_date`      date NOT NULL
-          ,`test_start_date_str`  varchar(20) NOT NULL
-          ,`school_year_id`       int unsigned,
-         primary key (`test_start_date`),
+          `test_start_date`      date NOT NULL,
+          `test_start_date_str`  varchar(20) NOT NULL,
+          `school_year_id`       int unsigned,
+          primary key (`test_start_date`),
           key (`school_year_id`)
         ) engine=innodb default charset=latin1
         ;
@@ -209,6 +222,38 @@ proc: begin
         --  We will also get the current school year information for the date the test was
         --  administered. This year infomration will be used to generate the new report data.
 
+
+        # manage dups
+        insert  tmp_stu_admin_dups (
+               student_code
+               ,test_name
+               ,school_year_id
+               ,test_start_date
+               ,test_start_date_str
+        )
+
+        select  ods.student_id
+            ,ods.test_name
+            ,tdc.school_year_id
+            ,max(tdc.test_start_date) as max_test_start_date
+            ,date_format(max(tdc.test_start_date), v_date_format_mask) as test_start_date_str
+        
+        from    v_pmi_ods_nwea as ods
+        join    tmp_date_conversion as tdc
+                on ods.test_start_date = tdc.test_start_date_str
+        group by student_id, test_name, school_year_id
+        having count(*) > 1
+        ;
+
+        update  tmp_stu_admin_dups as upd
+        join    v_pmi_ods_nwea as ods
+                on      upd.student_code = ods.student_id
+                and     upd.test_name = ods.test_name
+                and     upd.test_start_date_str = ods.test_start_date
+        set     upd.row_num = ods.row_num
+        ;
+
+
         insert  tmp_stu_admin (
                 row_num
                ,student_id
@@ -221,28 +266,7 @@ proc: begin
                ,school_code
                ,backfill_needed_flag
         )
-        select  ods.row_num
-               ,s.student_id
-               ,ods.test_name
-               ,md5(ods.test_name) as test_name_chksum
-               ,ods.student_id
-               ,tdc.school_year_id
-               ,coalesce(gl.grade_code, 'unassigned') 
-               ,coalesce(gl.grade_level_id, v_grade_unassigned_id)
-               ,NULL -- Dont' know school code just yet
-               ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
-        from    v_pmi_ods_nwea as ods
-        join    tmp_date_conversion tdc
-                on ods.test_start_date = tdc.test_start_date_str
-        join    c_student as s
-                on    s.student_state_code = ods.student_id
-        left join c_student_year as sty
-                on    sty.student_id = s.student_id
-                and   sty.school_year_id = tdc.school_year_id
-        left join c_grade_level as gl
-                on sty.grade_level_id  = gl.grade_level_id
-        where   ods.student_id is not null
-        union all
+
         select  ods.row_num
                ,s.student_id
                ,ods.test_name
@@ -254,17 +278,120 @@ proc: begin
                ,NULL -- Dont' know school code just yet
                ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
         from    v_pmi_ods_nwea as ods
-        join    tmp_date_conversion tdc
-                on ods.test_start_date = tdc.test_start_date_str
+        join    tmp_stu_admin_dups as dups
+                on      ods.row_num = dups.row_num
+        join    tmp_date_conversion as tdc
+                on dups.test_start_date = tdc.test_start_date
         join    c_student as s
-                on    s.fid_code = ods.student_id
+                on    s.student_code = dups.student_code
         left join c_student_year as sty
                 on    sty.student_id = s.student_id
                 and   sty.school_year_id = tdc.school_year_id
         left join c_grade_level as gl
                 on sty.grade_level_id  = gl.grade_level_id
         where   ods.student_id is not null
-        union all
+        ;
+
+
+        insert  tmp_stu_admin (
+                row_num
+               ,student_id
+               ,test_name
+               ,test_name_chksum
+               ,student_code
+               ,school_year_id
+               ,grade_code
+               ,grade_id
+               ,school_code
+               ,backfill_needed_flag
+        )
+
+        select  ods.row_num
+               ,s.student_id
+               ,ods.test_name
+               ,md5(ods.test_name) as test_name_chksum
+               ,ods.student_id
+               ,tdc.school_year_id
+               ,coalesce(gl.grade_code, 'unassigned') 
+               ,coalesce(gl.grade_level_id, v_grade_unassigned_id)
+               ,NULL -- Dont' know school code just yet
+               ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+        from    v_pmi_ods_nwea as ods
+        join    tmp_stu_admin_dups as dups
+                on      ods.row_num = dups.row_num
+        join    tmp_date_conversion as tdc
+                on dups.test_start_date = tdc.test_start_date
+        join    c_student as s
+                on    s.student_state_code = dups.student_code
+        left join   tmp_stu_admin as tar
+                on      tar.student_code = ods.student_id
+                and     tar.school_year_id = tdc.school_year_id
+        left join   c_student_year as sty
+                on    sty.student_id = s.student_id
+                and   sty.school_year_id = tdc.school_year_id
+        left join c_grade_level as gl
+                on sty.grade_level_id  = gl.grade_level_id
+        where   ods.student_id is not null
+        and     tar.student_id is null
+        ;
+
+        insert  tmp_stu_admin (
+                row_num
+               ,student_id
+               ,test_name
+               ,test_name_chksum
+               ,student_code
+               ,school_year_id
+               ,grade_code
+               ,grade_id
+               ,school_code
+               ,backfill_needed_flag
+        )
+
+        select  ods.row_num
+               ,s.student_id
+               ,ods.test_name
+               ,md5(ods.test_name) as test_name_chksum
+               ,ods.student_id
+               ,tdc.school_year_id
+               ,coalesce(gl.grade_code, 'unassigned')
+               ,coalesce(gl.grade_level_id, v_grade_unassigned_id)
+               ,NULL -- Dont' know school code just yet
+               ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+        from    v_pmi_ods_nwea as ods
+        join    tmp_stu_admin_dups as dups
+                on      ods.row_num = dups.row_num
+        join    tmp_date_conversion as tdc
+                on dups.test_start_date = tdc.test_start_date
+        join    c_student as s
+                on    s.fid_code = dups.student_code
+        left join   tmp_stu_admin as tar
+                on      tar.student_code = ods.student_id
+                and     tar.school_year_id = tdc.school_year_id
+        left join c_student_year as sty
+                on    sty.student_id = s.student_id
+                and   sty.school_year_id = tdc.school_year_id
+        left join c_grade_level as gl
+                on sty.grade_level_id  = gl.grade_level_id
+        where   ods.student_id is not null
+        and     tar.student_id is null
+        ;        
+
+
+        # Non-dups
+        insert  tmp_stu_admin (
+                row_num
+               ,student_id
+               ,test_name
+               ,test_name_chksum
+               ,student_code
+               ,school_year_id
+               ,grade_code
+               ,grade_id
+               ,school_code
+               ,backfill_needed_flag
+        )
+
         select  ods.row_num
                ,s.student_id
                ,ods.test_name
@@ -280,14 +407,102 @@ proc: begin
                 on ods.test_start_date = tdc.test_start_date_str
         join    c_student as s
                 on    s.student_code = ods.student_id
+        left join   tmp_stu_admin as tar
+                on      tar.student_code = ods.student_id
+                and     tar.school_year_id = tdc.school_year_id
         left join c_student_year as sty
                 on    sty.student_id = s.student_id
                 and   sty.school_year_id = tdc.school_year_id
         left join c_grade_level as gl
                 on sty.grade_level_id  = gl.grade_level_id
         where   ods.student_id is not null
+        and     tar.student_id is null
+        on duplicate key update row_num = values(row_num)
+        ;
+
+
+        insert  tmp_stu_admin (
+                row_num
+               ,student_id
+               ,test_name
+               ,test_name_chksum
+               ,student_code
+               ,school_year_id
+               ,grade_code
+               ,grade_id
+               ,school_code
+               ,backfill_needed_flag
+        )
+
+        select  ods.row_num
+               ,s.student_id
+               ,ods.test_name
+               ,md5(ods.test_name) as test_name_chksum
+               ,ods.student_id
+               ,tdc.school_year_id
+               ,coalesce(gl.grade_code, 'unassigned') 
+               ,coalesce(gl.grade_level_id, v_grade_unassigned_id)
+               ,NULL -- Dont' know school code just yet
+               ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+        from    v_pmi_ods_nwea as ods
+        join    tmp_date_conversion tdc
+                on ods.test_start_date = tdc.test_start_date_str
+        join    c_student as s
+                on    s.student_state_code = ods.student_id
+        left join   tmp_stu_admin as tar
+                on      tar.student_code = ods.student_id
+                and     tar.school_year_id = tdc.school_year_id
+        left join   c_student_year as sty
+                on    sty.student_id = s.student_id
+                and   sty.school_year_id = tdc.school_year_id
+        left join c_grade_level as gl
+                on sty.grade_level_id  = gl.grade_level_id
+        where   ods.student_id is not null
+        and     tar.student_id is null
+        on duplicate key update row_num = values(row_num)
+        ;
+
+        insert  tmp_stu_admin (
+                row_num
+               ,student_id
+               ,test_name
+               ,test_name_chksum
+               ,student_code
+               ,school_year_id
+               ,grade_code
+               ,grade_id
+               ,school_code
+               ,backfill_needed_flag
+        )
+
+        select  ods.row_num
+               ,s.student_id
+               ,ods.test_name
+               ,md5(ods.test_name) as test_name_chksum
+               ,ods.student_id
+               ,tdc.school_year_id
+               ,coalesce(gl.grade_code, 'unassigned')
+               ,coalesce(gl.grade_level_id, v_grade_unassigned_id)
+               ,NULL -- Dont' know school code just yet
+               ,case when sty.school_year_id is null then 1 end as backfill_needed_flag
+        from    v_pmi_ods_nwea as ods
+        join    tmp_date_conversion tdc
+                on ods.test_start_date = tdc.test_start_date_str
+        join    c_student as s
+                on    s.fid_code = ods.student_id
+        left join   tmp_stu_admin as tar
+                on      tar.student_code = ods.student_id
+                and     tar.school_year_id = tdc.school_year_id
+        left join c_student_year as sty
+                on    sty.student_id = s.student_id
+                and   sty.school_year_id = tdc.school_year_id
+        left join c_grade_level as gl
+                on sty.grade_level_id  = gl.grade_level_id
+        where   ods.student_id is not null
+        and     tar.student_id is null
         on duplicate key update row_num = values(row_num)
         ;        
+
         -- Now ascertain our internal grade_id based on customers grade code and if possible the school's code
         -- Note: Because school code would be very difficult to ascertain based on the incomming data file, 
         --       we have opted to flag the new student year row with an unassigned school id.
