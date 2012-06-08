@@ -7,13 +7,12 @@ $HeadURL$
 $Id$ 
 */
  
+
 drop procedure if exists etl_hst_load_nj_hspa//
 
-create definer=`dbadmin`@`localhost` procedure etl_hst_load_nj_hspa()
-contains sql
-sql security invoker
-comment '$Rev$ $Date$'
-
+create definer=`dbadmin`@`localhost` procedure  `etl_hst_load_nj_hspa`()
+    SQL SECURITY INVOKER
+    COMMENT 'zendesk ticket 19687'
 proc: begin 
 
     declare v_school_year_id smallint(4);
@@ -29,7 +28,7 @@ proc: begin
     declare v_grade_unassigned_id int(10);
     declare v_backfill_needed int(10);
     declare v_delete_count int(10);
-
+    
     declare v_strand_cursor cursor for
             select ayp_subject_id
                   ,ayp_strand_id
@@ -46,6 +45,9 @@ proc: begin
     set v_no_more_rows = true;
     
     call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
+    
+    set @use_strand_raw_score := pmi_f_get_etl_setting('njhspawritingrawscore');
+    
 
     set v_ods_table = 'pmi_ods_nj_hspa';
     set v_ods_view = 'v_pmi_ods_nj_hspa';
@@ -69,10 +71,7 @@ proc: begin
 
     if v_view_exists > 0 then
 
-            ###########################
-            ## Create Working Tables ##
-            ###########################
-    
+            
             drop table if exists `tmp_delete_key`;
             drop table if exists `tmp_stu_admin`;
             drop table if exists `tmp_subject_list`;
@@ -140,11 +139,7 @@ proc: begin
             ) ENGINE=InnoDB DEFAULT CHARSET=latin1
             ;
             
-                #########################
-                ## Load Working Tables ##
-                #########################
-        
-            # subject column metadata
+                
             insert  tmp_subject_list (
                  ayp_subject_id
                 ,ayp_subject_column_ss
@@ -162,7 +157,7 @@ proc: begin
                     and ayp.score_column_id = sco.column_id
             ;
     
-            # strand column metadata
+            
             insert  tmp_strand_list (
                 ayp_subject_id
                 ,ayp_strand_id
@@ -189,7 +184,7 @@ proc: begin
             ;
   
    
-            # tmp_school                                                                              
+            
             insert tmp_school (
                 school_id
                 ,school_code
@@ -205,7 +200,7 @@ proc: begin
             where school_state_code is not null
             ;
         
-            # stu admin data
+            
             insert  tmp_stu_admin (                                                                                                                                                                                
                     row_num
                     ,student_code
@@ -273,12 +268,6 @@ proc: begin
             on duplicate key update row_num = values(row_num);
 
 
-            ##########################################
-            ## Backfill for c_student_year 
-            ## Need to detect and load c_student_year 
-            ## records when supporting ones does not exist
-            ##############################################
-    
             select count(*)
             into v_backfill_needed
             from tmp_stu_admin
@@ -311,21 +300,11 @@ proc: begin
                     ,school_id = values(school_id)
                 ;
                 
-                ##########################################
-                ## proc developed to standardize loading
-                ## c_student_year
-                ############################################
-    
-    
+ 
                call etl_hst_load_backfill_stu_year();  
             
             end if;
 
-    
-        ########################
-        ## Load Target Tables ##
-        ########################
-    
         Open v_subject_cursor;
         loop_subject_cursor: loop
 
@@ -392,14 +371,14 @@ proc: begin
                 leave loop_strand_cursor;
             end if;
             
-            SET @sql_text := '';
-            SET @sql_text := concat(@sql_text,' insert c_ayp_strand_student (ayp_subject_id, ayp_strand_id, student_id, school_year_id '
+                SET @sql_text := '';
+                SET @sql_text := concat(@sql_text,' insert c_ayp_strand_student (ayp_subject_id, ayp_strand_id, student_id, school_year_id '
                                              ' ,month_id, ayp_score, points_earned,points_possible,last_user_id, create_timestamp) '
                                              ,' select  ', v_ayp_subject_id, ' , ', v_ayp_strand_id,' ,sadmin.student_id ,'
                                              ,'  sadmin.school_year_id ,'
                                              ,' sadmin.test_month, '
-                                             ,' case when spp.ayp_subject_code= ''hspaLangArtsLiter'' and spp.ayp_strand_code IN(''hspaLangArtsLiterWP'',''hspaLangArtsLiterWS'') then ' ,v_column_pe
-                                             ,' else round((cast(ods.', v_column_pe, ' as decimal(9,3))/ cast(spp.pp as decimal(9,3))) * 100) end as ayp_score, '
+                                             ,'  if(@use_strand_raw_score=''y'' and spp.ayp_subject_code= ''hspaLangArtsLiter'' and spp.ayp_strand_code IN(''hspaLangArtsLiterWP'',''hspaLangArtsLiterWS''),' ,v_column_pe
+                                             ,' ,round((cast(ods.', v_column_pe, ' as decimal(9,3))/ cast(spp.pp as decimal(9,3))) * 100)) as ayp_score, '
                                              , ' ods.', v_column_pe,  ','
                                              ,'spp.pp ,'
                                              ,' 1234 as last_user_id, '
@@ -426,18 +405,18 @@ proc: begin
                                              ,' ayp_score = values(ayp_score),points_earned = values(points_earned), points_possible = values(points_possible), '
                                              ,' last_user_id = values(last_user_id) ;');
 
-            prepare stmt from @sql_text;
-            execute stmt;
-            deallocate prepare stmt;
+                prepare stmt from @sql_text;
+                execute stmt;
+                deallocate prepare stmt;
             
         end loop loop_strand_cursor;
                                             
 
 
-        #######################################################################################
-        ## Delete records that exist in source with 0 month_id (single admin) 
-        ## based on student, school_year and subject
-        #######################################################################################
+        
+        
+        
+        
 
         select  count(*)
         into    v_delete_count
@@ -477,9 +456,9 @@ proc: begin
              
         end if; 
     
-    #########################
-    ## clean-up tmp tables ##
-    #########################
+    
+    
+    
     
             
     drop table if exists `tmp_delete_key`;
@@ -489,9 +468,9 @@ proc: begin
     drop table if exists `tmp_student_year_backfill`;
     drop table if exists `tmp_school`;
    
-    #################
-    ## Update Log
-    #################
+    
+    
+    
     set @sql_scan_log := concat('call ', @db_name_ods, '.imp_set_upload_file_status (\'', v_ods_table, '\', \'P\', \'ETL Load Successful\')');
 
     prepare sql_scan_log from @sql_scan_log;
