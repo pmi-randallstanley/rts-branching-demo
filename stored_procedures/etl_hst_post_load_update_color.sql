@@ -1,4 +1,3 @@
-
 /*
 $Rev: 8022 $ 
 $Author: randall.stanley $ 
@@ -85,7 +84,7 @@ proc: begin
                 ON      gl.grade_level_id = sty.grade_level_id
         LEFT  JOIN    c_color_ayp_subject AS csub
                 ON      csub.ayp_subject_id = ss.ayp_subject_id
-                AND     case when ss.alt_ayp_score > 500 then ss.school_year_id -1 between csub.begin_year AND csub.end_year
+                AND     case when ss.alt_ayp_score > 500 then 2010 between csub.begin_year AND csub.end_year  ## Need to use 2010 cuts for scores > 500
                             when ss.alt_ayp_score <= 500 then ss.school_year_id  between csub.begin_year AND csub.end_year
                         end 
                 AND     gl.grade_sequence between csub.begin_grade_sequence AND csub.end_grade_sequence
@@ -94,7 +93,7 @@ proc: begin
                 ON      clr.color_id = csub.color_id
         SET     ss.alt_ayp_score_color = case when ss.alt_ayp_score is NULL then NULL else coalesce(clr.moniker, 'white') end
                 ,ss.ayp_score_color = case when ss.ayp_score is NULL then NULL else coalesce(clr.moniker, 'white') end
-        WHERE ss.school_year_id = 2012
+        WHERE ss.school_year_id >= 2011
         ;
         
     ELSEIF @is_ga_client > 0 THEN 
