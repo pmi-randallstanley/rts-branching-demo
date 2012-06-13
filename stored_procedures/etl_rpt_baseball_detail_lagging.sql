@@ -1,3 +1,4 @@
+
 /*
 $Rev: 7410 $ 
 $Author: randall.stanley $ 
@@ -106,7 +107,7 @@ PROC: BEGIN
             AND bbm.bb_group_id = bbg.bb_group_id
         LEFT JOIN pmi_color AS cl
             ON  cl.color_id = atta.color_id
-        WHERE   asubst.ayp_score IS NOT NULL
+        WHERE   coalesce(asubst.ayp_score,asubst.alt_ayp_score) IS NOT NULL   #asubst.ayp_score IS NOT NULL
         AND     asubst.score_record_flag = 1
     
         UNION 
