@@ -17,6 +17,7 @@ COMMENT '$Rev: 7380 $'
 PROC: BEGIN 
 
     declare v_date_format_mask varchar(15) default '%m%d%Y';
+    declare v_attendTruncateBeforeLoading varchar(15) default 'n';
     
     call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
     
@@ -33,6 +34,16 @@ PROC: BEGIN
          if @attendDateFormatMask is not null then
             set v_date_format_mask = @attendDateFormatMask;
          end if;
+         
+        set @attendTruncateBeforeLoading := pmi_f_get_etl_setting('attendTruncateBeforeLoading');
+    
+         if @attendTruncateBeforeLoading is not null then
+            set v_attendTruncateBeforeLoading = @attendTruncateBeforeLoading;
+         end if;
+         
+        if v_attendTruncateBeforeLoading = 'y' then
+            truncate table rpt_attendance;
+        end if;
         
         ##############################################################
         # Insert Attendance Records  
@@ -73,6 +84,9 @@ PROC: BEGIN
             ,type   = odsimp.att_type
             ,last_user_id = 1234
         ;
+        
+        ### Optimize the rpt_attendance table
+        optimize table rpt_attendance;
 
         #################
         ## Update Log
