@@ -49,7 +49,8 @@ BEGIN
                     on    cstr.ayp_subject_id = str.ayp_subject_id 
                     AND   cstr.ayp_strand_id = str.ayp_strand_id
           where (str.moniker like 'ng%' or str.moniker is null) 
-            and ((cass.school_year_id = 2012 and cass.alt_ayp_score > 500) or cass.school_year_id = 2011)
+            #and ((cass.school_year_id = 2012 and cass.alt_ayp_score > 500) or cass.school_year_id = 2011)
+            and cass.school_year_id >= 2011 and cass.alt_ayp_score > 500
           group by cass.student_id, cass.ayp_subject_id, cass.school_year_id, cass.month_id
           ;
           
