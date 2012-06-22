@@ -21,13 +21,15 @@ proc: begin
             ,count(case when st.state_abbr = 'ga' then st.state_abbr end)
             ,count(case when st.state_abbr = 'mn' then st.state_abbr end)
             ,count(case when st.state_abbr = 'ky' then st.state_abbr end)
+            ,count(case when st.state_abbr = 'nc' then st.state_abbr end)
     INTO    @is_fl_client
             ,@is_ga_client
             ,@is_mn_client
             ,@is_ky_client
+            ,@is_nc_client
     FROM    pmi_admin.pmi_state AS st
     WHERE   st.state_id = @state_id
-    AND     st.state_abbr in ('fl','ga','mn','ky');
+    AND     st.state_abbr in ('fl','ga','mn','ky','nc');
 
     IF @is_fl_client > 0 then
         
@@ -220,6 +222,27 @@ proc: begin
         LEFT  JOIN    pmi_color AS clr
                 ON      clr.color_id = csub.color_id
         SET     ss.ayp_score_color = coalesce(clr.moniker, 'white')
+        ;
+        
+    ELSEIF @is_nc_client > 0 THEN 
+        
+        UPDATE c_ayp_subject_student AS ss
+        JOIN    c_ayp_subject AS sub
+                ON      ss.ayp_subject_id = sub.ayp_subject_id
+        JOIN    c_student_year AS sty
+                ON      sty.student_id = ss.student_id
+                AND     sty.school_year_id = ss.school_year_id
+        JOIN    c_grade_level AS gl
+                ON      gl.grade_level_id = sty.grade_level_id
+        LEFT  JOIN    c_color_ayp_subject AS csub
+                ON      csub.ayp_subject_id = ss.ayp_subject_id
+                AND     ss.school_year_id between csub.begin_year AND csub.end_year
+                AND     gl.grade_sequence between csub.begin_grade_sequence AND csub.end_grade_sequence
+                AND     round(ss.alt_ayp_score,0) between csub.min_score AND csub.max_score
+        LEFT  JOIN    pmi_color AS clr
+                ON      clr.color_id = csub.color_id
+        SET     ss.alt_ayp_score_color = coalesce(clr.moniker, 'white')
+                ###  Only setting alt ayp score color.  This is different than all other HST loads.  ayp score color is set in load proc
         ;
     
     ELSE

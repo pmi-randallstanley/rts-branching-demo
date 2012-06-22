@@ -43,7 +43,7 @@ proc: begin
     select  student_id
         ,ayp_subject_id
         ,school_year_id
-        ,max(ayp_score)
+        ,max(coalesce(alt_ayp_score,ayp_score))  ### Needed to fix so it looks at alt score if that is there
     
     from    c_ayp_subject_student
     where   ayp_subject_id = p_ayp_subject_id
