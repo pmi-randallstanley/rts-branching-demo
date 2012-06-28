@@ -1,14 +1,6 @@
-/*
-$Rev: 9932 $ 
-$Author: randall.stanley $ 
-$Date: 2011-01-26 11:11:35 -0500 (Wed, 26 Jan 2011) $
-$HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Redwood/Core/stored_procedures/etl_imp_student_fl_lg_bq_filter.sql $
-$Id: etl_imp_student_fl_lg_bq_filter.sql 9932 2011-01-26 16:11:35Z randall.stanley $ 
-*/
+drop procedure if exists etl_imp_student_fl_lg_bq_filter_2012//
 
-drop procedure if exists etl_imp_student_fl_lg_bq_filter//
-
-create definer=`dbadmin`@`localhost` procedure etl_imp_student_fl_lg_bq_filter()
+create definer=`dbadmin`@`localhost` procedure etl_imp_student_fl_lg_bq_filter_2012()
 contains sql
 sql security invoker
 comment '$Rev: 9932 $ $Date: 2011-01-26 11:11:35 -0500 (Wed, 26 Jan 2011) $'
@@ -66,6 +58,7 @@ proc: begin
     where   generic_type_code in ('pmiStuFltr1','pmiStuFltr2','pmiStuFltr3','pmiStuFltr4')
     and     active_flag = 1
     ;
+
     
     # Get current school year ID
     select  y.school_year_id
@@ -83,14 +76,15 @@ proc: begin
               and   att.moniker = 'fcat'
     where     atty.ayp_reporting_flag = 1
     ;
-        
+    
     call set_db_vars(@client_id, @state_id, @db_name, @db_name_core, @db_name_ods, @db_name_ib, @db_name_view, @db_name_pend, @db_name_dw);
     
     # Only proceed if client is FL client, and filter metadata exists for that district
-    if @state_id = v_fl_state_id and v_filter_metadata_count > 0 and v_fcat_school_year_id < 2012  then  ## Only processing for fcat year 2011 and earlier now.
+    #  This logic has been amended to make sure the fcat year_id year is >= 2012 b/c it is a new calculation
+    if @state_id = v_fl_state_id and v_filter_metadata_count > 0 and v_fcat_school_year_id >= 2012 then
     
         Select 'Processing LG/BQ for school year: ', v_fcat_school_year_id;
-        
+    
         #################################
         #create a tmp tables
         #################################
@@ -104,6 +98,7 @@ proc: begin
           `school_id` int(10) NOT NULL,
           `school_year_id` int(10) NOT NULL,
           `fcat_yr_grade_code` varchar(15) default NULL,
+          `fcat_prior_yr_grade_code` varchar(15) default NULL,
           `curr_yr_grade_code` varchar(15) default NULL,
           `ayp_subject_code` varchar(25) NOT NULL,
           `ayp_subject_id` int(10) NOT NULL,
@@ -154,6 +149,7 @@ proc: begin
             ,school_id
             ,school_year_id
             ,fcat_yr_grade_code
+            ,fcat_prior_yr_grade_code
             ,curr_yr_grade_code
             ,ayp_subject_code
             ,ayp_subject_id
@@ -170,16 +166,15 @@ proc: begin
                 ,currsty.school_id                as 'school_id'
                 ,cass.school_year_id              as 'school_year_id'
                 ,gl.grade_code                    as 'fcat_yr_grade_code'
+                ,NULL                             as 'fcat_prior_year_grade_code'
                 ,glcurr.grade_code                as 'curr_yr_grade_code'
                 ,cas.ayp_subject_code             as 'ayp_subject_code' 
                 ,cass.ayp_subject_id              as 'ayp_subject_id'
                 ,al.pmi_al                        as 'fcat_yr_pmi_al'           
                 ,NULL                             as 'prior_yr_pmi_al'  
-                ,cass.ayp_score                   as 'fcat_yr_ayp_score'
+                ,max(cass.ayp_score)              as 'fcat_yr_ayp_score'
                 ,NULL                             as 'prior_yr_ayp_score'        
-                #,cass.alt_ayp_score               as 'fcat_yr_dev_score'
-                #We have converted 2011 scores and put the old dev score into the scale score column if test was fcat 2.0 (score <= 500)
-                ,case when cass.school_year_id = 2011 and cass.alt_ayp_score <= 500 then cass.ayp_score else cass.alt_ayp_score end as 'fcat_yr_dev_score'
+                ,max(cass.alt_ayp_score)          as 'fcat_yr_dev_score'
                 ,NULL                             as 'prior_yr_dev_score'
                 ,NULL                             as 'lg_flag'
                 ,NULL                             as 'bq_flag' 
@@ -202,8 +197,17 @@ proc: begin
                 and currsty.school_year_id      = v_curr_school_year_id
         join    c_grade_level glcurr
                 on  glcurr.grade_level_id       = currsty.grade_level_id
-        #where    teststy.active_flag            = 1
-        #order by teststy.student_id, ayp_subject_code
+        #  New Logic to make sure we're only dealing with FCAT 2.0 scores (as identified by having NG Strand data)
+        left join c_ayp_strand_student cstr 
+                    on    cstr.student_id = cass.student_id 
+                    AND   cstr.ayp_subject_id = cass.ayp_subject_id 
+                    AND   cstr.school_year_id = cass.school_year_id 
+                    AND   cstr.month_id = cass.month_id
+        left join c_ayp_strand str 
+                  on    cstr.ayp_subject_id = str.ayp_subject_id 
+                  AND   cstr.ayp_strand_id = str.ayp_strand_id
+        where str.moniker like 'ng%' 
+        group by currsty.student_id, currsty.school_id, cass.school_year_id, gl.grade_code, glcurr.grade_code, cass.ayp_subject_id, al.pmi_al
         ;
     
         #######################################################################
@@ -211,17 +215,35 @@ proc: begin
         ########################################################################
         update tmp_student_math_read_lg_bq t
         join  c_ayp_subject_student cass
-              on t.student_id            = cass.student_id 
-              and t.ayp_subject_id       = cass.ayp_subject_id
-              and cass.school_year_id    = (v_fcat_school_year_id - 1)  
-              and cass.score_record_flag = 1
+              on    t.student_id           = cass.student_id 
+              and   t.ayp_subject_id       = cass.ayp_subject_id
+              and   cass.school_year_id    = (v_fcat_school_year_id - 1)  
+              and   cass.score_record_flag = 1
+        join  c_student_year sty
+              on    cass.student_id = sty.student_id
+              and   sty.school_year_id   = (v_fcat_school_year_id - 1)
+        join  c_grade_level as gl
+              on  gl.grade_level_id      = sty.grade_level_id
         join  c_ayp_achievement_level al
-              on cass.al_id = al.al_id
+              on    cass.al_id = al.al_id
         set   prior_yr_pmi_al     = al.pmi_al
               ,prior_yr_ayp_score  = cass.ayp_score
               ,prior_yr_dev_score  = cass.alt_ayp_score
+              ,fcat_prior_yr_grade_code = gl.grade_code
+        ## Concerned about using where exists, but we need to make sure that the prev year score is NG
+        where exists (
+                      select 'x'
+                      from    c_ayp_strand_student cstr
+                      join    c_ayp_strand str
+                              on      cstr.ayp_subject_id = str.ayp_subject_id 
+                              AND     cstr.ayp_strand_id = str.ayp_strand_id
+                              AND     str.moniker like 'ng%'
+                      where   cass.student_id = cstr.student_id
+                        and   cass.ayp_subject_id = cstr.ayp_subject_id
+                        and   cass.school_year_id = cstr.school_year_id
+                        and   cass.month_id = cstr.month_id
+                     )
         ;
-        ### Note for above:  We don't have to convert prior year scores b/c this will only run for latest fcat year of 2011.  We didn't convert scores in 2010
     
         #################################################################
         # Flag Learning Gain Students per Subject (Reading/Math only)
@@ -241,13 +263,20 @@ proc: begin
                         -- 1 or more al gain from prior year score is a lg 
                         when (t.fcat_yr_pmi_al - t.prior_yr_pmi_al >= 1) then 1 
                         -- 1 yr or more growth in dev score exceeded is a lg even though al = 1 or 2
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 4  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 230 then 1 
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 5  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 166 then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 6  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 133 then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 7  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 110 then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 8  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 92  then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 9  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 77  then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 10 and t.fcat_yr_dev_score - t.prior_yr_dev_score > 77  then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 4  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 12 then 1 
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 5  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 10 then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 6  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 9 then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 7  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 8 then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 8  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 7  then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 9  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 6  then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 10 and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 8  then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 4  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 11 then 1 
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 5  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 9 then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 6  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 8 then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 7  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 7 then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 8  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 6  then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 9  and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 5  then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 10 and t.fcat_yr_dev_score - t.prior_yr_dev_score >= 7  then 1
                         else 0
                     end
                 when t.ayp_subject_code = 'fcatMath' then 
@@ -261,13 +290,18 @@ proc: begin
                         -- 1 or more al gain from prior year score is a lg 
                         when (t.fcat_yr_pmi_al - t.prior_yr_pmi_al >= 1) then 1 
                         -- 1 yr or more growth in dev score exceeded is a lg even though al = 1 or 2
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 4  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 162 then 1 
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 5  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 119 then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 6  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 95  then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 7  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 78  then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 8  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 64  then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 9  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 54  then 1
-                        when t.fcat_yr_pmi_al in(1,2) and t.fcat_yr_grade_code = 10 and t.fcat_yr_dev_score - t.prior_yr_dev_score > 48  then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 4  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 16 then 1 
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 5  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 10 then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 6  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 10  then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 7  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 9  then 1
+                        when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 8  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 11  then 1
+                        #when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 9  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 54  then 1
+                        #when t.fcat_yr_pmi_al = 1 and t.prior_yr_pmi_al = 1 and t.fcat_yr_grade_code = 10 and t.fcat_yr_dev_score - t.prior_yr_dev_score > 48  then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 4  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 15 then 1 
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 5  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 9 then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 6  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 9  then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 7  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 8  then 1
+                        when t.fcat_yr_pmi_al = 2 and t.prior_yr_pmi_al = 2 and t.fcat_yr_grade_code = 8  and t.fcat_yr_dev_score - t.prior_yr_dev_score > 10  then 1
                         else 0
                     end
                 else 0
@@ -278,87 +312,7 @@ proc: begin
         ######################################################################################
         # Flag Lower Quartile Students per School, Grade, Subject (Reading/Math only)
         ######################################################################################
-/*    
-        #fcat reading
-        update tmp_student_math_read_lg_bq t
-          join (
-              select mr1.school_id,
-                    mr1.curr_yr_grade_code, 
-                    mr1.ayp_subject_code,
-                    mr1.student_id,              
-                    cast(mr1.fcat_yr_dev_score as signed), 
-                    sum(case 
-                            when cast(mr1.fcat_yr_dev_score AS SIGNED) < cast(mr2.fcat_yr_dev_score AS SIGNED) then 1 
-                                else 0 
-                            end) + 1 AS 'rank',
-                    count(*) AS 'total_count',  
-                    round(((sum(case 
-                            when cast(mr1.fcat_yr_dev_score AS SIGNED) < cast(mr2.fcat_yr_dev_score AS SIGNED) then 1 
-                                else 0 
-                            end) + 1)/count(*))*100) AS 'percentile'
-                from   tmp_student_math_read_lg_bq mr1
-                join   tmp_student_math_read_lg_bq mr2
-                    on  mr1.school_id        = mr2.school_id   
-                    and mr1.curr_yr_grade_code      = mr2.curr_yr_grade_code 
-                    and mr1.ayp_subject_id   = mr2.ayp_subject_id  
-                where 
-                      mr1.ayp_subject_code = 'fcatReading'
-                      and mr1.fcat_yr_dev_score is not null 
-                      and mr2.fcat_yr_dev_score is not null              
-                group by mr1.school_id,
-                        mr1.curr_yr_grade_code,
-                        mr1.ayp_subject_code,
-                        mr1.student_id
-                order by mr1.school_id,
-                        mr1.curr_yr_grade_code,
-                        rank ) t2
-              on  t.student_id         = t2.student_id 
-              and   t.ayp_subject_code = t2.ayp_subject_code 
-            SET t.rank        = t2.percentile, 
-                t.bq_flag = case  when t2.percentile >= 75 then 1  
-                                          else 0
-                                      end; 
-        
-        #fcat math
-        update tmp_student_math_read_lg_bq t
-        join (
-              select mr1.school_id, 
-                      mr1.curr_yr_grade_code, 
-                      mr1.ayp_subject_code,
-                      mr1.student_id,              
-                    cast(mr1.fcat_yr_dev_score as signed), 
-                    sum(case 
-                            when cast(mr1.fcat_yr_dev_score AS SIGNED) < cast(mr2.fcat_yr_dev_score AS SIGNED) then 1 
-                                else 0 
-                            end) + 1 AS 'rank',
-                    count(*) AS 'total_count',  
-                    round(((sum(case 
-                                    when cast(mr1.fcat_yr_dev_score AS SIGNED) < cast(mr2.fcat_yr_dev_score AS SIGNED) then 1 
-                                        else 0 
-                                    end) + 1)/count(*))*100) AS 'percentile'
-                from   tmp_student_math_read_lg_bq mr1
-                join   tmp_student_math_read_lg_bq mr2
-                    on   mr1.school_id        = mr2.school_id   
-                    and  mr1.curr_yr_grade_code      = mr2.curr_yr_grade_code 
-                    and  mr1.ayp_subject_id   = mr2.ayp_subject_id   
-                where 
-                      mr1.ayp_subject_code = 'fcatMath' 
-                      and mr1.fcat_yr_dev_score is not null 
-                      and mr2.fcat_yr_dev_score is not null             
-                group by mr1.school_id,
-                        mr1.curr_yr_grade_code,
-                        mr1.ayp_subject_code,
-                        mr1.student_id
-                order by  mr1.school_id,
-                          mr1.curr_yr_grade_code,
-                          rank ) t2
-            on  t.student_id        = t2.student_id
-            and  t.ayp_subject_code = t2.ayp_subject_code 
-        SET t.rank        = t2.percentile, 
-            t.bq_flag = case  when t2.percentile >= 75 then 1  
-                                      else 0        
-                                  end; 
-*/
+
 
     
         # New logic to calculate bottom quartile.  Basically, we are to count only the unique scores by school, subject and grade
@@ -410,6 +364,20 @@ proc: begin
             ;
             
             
+            ## New for 2012 school year.  Lev 3 students are no longer included in bq
+            update tmp_student_math_read_lg_bq tmp
+            set     tmp.bq_flag = 0 
+            where  tmp.fcat_yr_pmi_al >= 3
+            ;
+            
+            ## New for 2012 school year.  If student is retained, and is at lev 1 or 2, they are added to the bottom quartile
+            update  tmp_student_math_read_lg_bq tmp
+            set     tmp.bq_flag = 1
+            where   tmp.fcat_yr_grade_code = tmp.fcat_prior_yr_grade_code  ## this is retained student indicator - grade levels are the same
+              and   tmp.fcat_yr_pmi_al in (1,2)
+            ;
+            
+            
             
             
         end loop loop_cur_1;
@@ -430,7 +398,9 @@ proc: begin
                 ,min(st.student_code)
                 , min(case
                     when tmpT.ayp_subject_code is null then null
-                    when tmpT.ayp_subject_code = 'fcatMath' and tmpT.fcat_yr_grade_code in ('PK','KG','1','2','3','11','12','unassigned') then null
+                    #when tmpT.ayp_subject_code = 'fcatMath' and tmpT.fcat_yr_grade_code in ('PK','KG','1','2','3','11','12','unassigned') then null
+                    #change for 2012 - 9/10th grade students no longer apply to calculation
+                    when tmpT.ayp_subject_code = 'fcatMath' and tmpT.fcat_yr_grade_code in ('PK','KG','1','2','3','9','10','11','12','unassigned') then null
                     when tmpT.ayp_subject_code = 'fcatMath' and tmpT.lg_flag = 1 then v_value_text_yes
                     when tmpT.ayp_subject_code = 'fcatMath' and tmpT.lg_flag = 0 then v_value_text_no
                     when tmpT.ayp_subject_code = 'fcatMath' then v_value_text_unknown
@@ -474,11 +444,8 @@ proc: begin
         drop table if exists `tmp_school_subject_grade_ranking`;
     
     else
-        if @state_id = v_fl_state_id and v_filter_metadata_count > 0 and v_fcat_school_year_id >= 2012  then
-            # call proc to process LG/BQ for rules that start in 2012
-            call etl_imp_student_fl_lg_bq_filter_2012();
-        end if;
-    end if; #if state = fl and filter metadata exists and fcat school year < 2012
+        Select 'Not FL or wrong year - no processing.';
+    end if; #if state = fl and filter metadata exists
 
 end proc;
 //
