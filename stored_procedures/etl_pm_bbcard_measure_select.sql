@@ -98,6 +98,7 @@ PROC: BEGIN
     ;
     
     # BB Card by Grade filter table
+    ### This currenlty puts in data by school of enrollment, will add query below to put in data by school of instructino as well.
     insert pm_bbcard_measure_select ( grade_level_id, school_id, bb_group_id, bb_measure_id, bb_measure_item_id, school_year_id, last_user_id, create_timestamp)
     select  sty.grade_level_id, sty.school_id, tmp1.bb_group_id, tmp1.bb_measure_id, tmp1.bb_measure_item_id, tmp1.school_year_id, 1234, now()
     from    c_student st
@@ -110,6 +111,25 @@ PROC: BEGIN
             on      st.student_id = tmp1.student_id
     where    st.active_flag = 1 
     group by sty.grade_level_id, sty.school_id, tmp1.bb_group_id, tmp1.bb_measure_id, tmp1.bb_measure_item_id, tmp1.school_year_id
+    ;
+    
+    ###  Here is the fix to add measures based on school of instruction.  Using on duplicate key, so it will only add the net new
+    insert pm_bbcard_measure_select ( grade_level_id, school_id, bb_group_id, bb_measure_id, bb_measure_item_id, school_year_id, last_user_id, create_timestamp)
+    select  sty.grade_level_id, cl.school_id, tmp1.bb_group_id, tmp1.bb_measure_id, tmp1.bb_measure_item_id, tmp1.school_year_id, 1234, now()
+    from    c_student st
+    join    c_school_year as sy
+            on      sy.active_flag = 1
+    join    c_student_year sty
+            on      sty.student_id = st.student_id
+            and     sty.active_flag = 1
+    join    c_class_enrollment ce
+            on      st.student_id = ce.student_id
+    join    c_class cl
+            on      ce.class_id = cl.class_id
+    join    tmp_bb_stu_measure as tmp1
+            on      st.student_id = tmp1.student_id
+    group by sty.grade_level_id, cl.school_id, tmp1.bb_group_id, tmp1.bb_measure_id, tmp1.bb_measure_item_id, tmp1.school_year_id
+    on duplicate key update last_user_id = 1234
     ;
 
     # BB Card by Teacher filter table
