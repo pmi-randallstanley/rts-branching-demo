@@ -36,7 +36,7 @@ proc: begin
         UPDATE c_ayp_subject_student AS ss
         JOIN    c_ayp_subject AS sub
                 ON      ss.ayp_subject_id = sub.ayp_subject_id
-                AND     sub.ayp_subject_code not in ('fcatScience','fcatWriting','fleocAlgebra1','fleocGeometry','fleocBiology')
+                AND     sub.ayp_subject_code not in ('fcatScience','fcatWriting','fleocAlgebra1','fleocGeometry','fleocBiology','flpertMath','flpertReading','flpertWriting')
         JOIN    c_student_year AS sty
                 ON      sty.student_id = ss.student_id
                 AND     sty.school_year_id = ss.school_year_id
@@ -57,7 +57,7 @@ proc: begin
         UPDATE c_ayp_subject_student AS ss
         JOIN    c_ayp_subject AS sub
                 ON      ss.ayp_subject_id = sub.ayp_subject_id
-                AND     sub.ayp_subject_code in ('fcatScience','fcatWriting','fleocAlgebra1','fleocGeometry','fleocBiology')
+                AND     sub.ayp_subject_code in ('fcatScience','fcatWriting','fleocAlgebra1','fleocGeometry','fleocBiology','flpertMath','flpertReading','flpertWriting')
         JOIN    c_student_year AS sty
                 ON      sty.student_id = ss.student_id
                 AND     sty.school_year_id = ss.school_year_id
@@ -96,6 +96,48 @@ proc: begin
         SET     ss.alt_ayp_score_color = case when ss.alt_ayp_score is NULL then NULL else coalesce(clr.moniker, 'white') end
                 ,ss.ayp_score_color = case when ss.ayp_score is NULL then NULL else coalesce(clr.moniker, 'white') end
         WHERE ss.school_year_id >= 2011
+        ;
+        
+        UPDATE c_ayp_subject_student AS ss
+        JOIN    c_ayp_subject AS sub
+                ON      ss.ayp_subject_id = sub.ayp_subject_id
+                AND     sub.ayp_subject_code in ('fcatMath', 'fcatReading')
+        JOIN    c_student_year AS sty
+                ON      sty.student_id = ss.student_id
+                AND     sty.school_year_id = ss.school_year_id
+        JOIN    c_grade_level AS gl
+                ON      gl.grade_level_id = sty.grade_level_id
+        LEFT  JOIN    c_color_ayp_subject AS csub
+                ON      csub.ayp_subject_id = ss.ayp_subject_id
+                AND     ss.school_year_id between csub.begin_year AND csub.end_year
+                AND     gl.grade_sequence between csub.begin_grade_sequence AND csub.end_grade_sequence
+                AND     round(ss.alt_ayp_score,0) between csub.min_score AND csub.max_score
+        LEFT  JOIN    pmi_color AS clr
+                ON      clr.color_id = csub.color_id
+        SET     ss.alt_ayp_score_color = case when ss.alt_ayp_score is NULL then NULL else coalesce(clr.moniker, 'white') end
+                ,ss.ayp_score_color = case when ss.ayp_score is NULL then NULL else coalesce(clr.moniker, 'white') end
+        WHERE ss.school_year_id < 2011
+        ;
+        
+        
+        UPDATE c_ayp_subject_student AS ss
+        JOIN    c_ayp_subject AS sub
+                ON      ss.ayp_subject_id = sub.ayp_subject_id
+                AND     sub.ayp_subject_code like ('faa%')
+        JOIN    c_student_year AS sty
+                ON      sty.student_id = ss.student_id
+                AND     sty.school_year_id = ss.school_year_id
+        JOIN    c_grade_level AS gl
+                ON      gl.grade_level_id = sty.grade_level_id
+        LEFT  JOIN    c_color_ayp_subject AS csub
+                ON      csub.ayp_subject_id = ss.ayp_subject_id
+                AND     ss.school_year_id between csub.begin_year AND csub.end_year
+                AND     gl.grade_sequence between csub.begin_grade_sequence AND csub.end_grade_sequence
+                AND     round(ss.alt_ayp_score,0) between csub.min_score AND csub.max_score
+        LEFT  JOIN    pmi_color AS clr
+                ON      clr.color_id = csub.color_id
+        SET     ss.alt_ayp_score_color = coalesce(clr.moniker, 'white')
+                ,ss.ayp_score_color = coalesce(clr.moniker, 'white')
         ;
         
     ELSEIF @is_ga_client > 0 THEN 
