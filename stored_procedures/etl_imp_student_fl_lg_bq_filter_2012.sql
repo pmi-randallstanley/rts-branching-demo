@@ -1,3 +1,4 @@
+delimiter //
 drop procedure if exists etl_imp_student_fl_lg_bq_filter_2012//
 
 create definer=`dbadmin`@`localhost` procedure etl_imp_student_fl_lg_bq_filter_2012()
@@ -119,6 +120,7 @@ proc: begin
         CREATE TABLE `tmp_student_lg_bq` (
           `student_id` int(10) NOT NULL,
           `student_code` varchar(15) NOT NULL,
+          `school_year_id` int(10) NOT NULL,
           `math_lg` varchar(25) default NULL,
           `reading_lg` varchar(25) default NULL,
           `math_bq` varchar(25) default NULL,
@@ -393,9 +395,10 @@ proc: begin
         #      BQ:  If BQ, then 'Yes' else 'No'
         ###############################################################################################################   
      
-        insert into tmp_student_lg_bq (student_id, student_code, math_lg, reading_lg, math_bq, reading_bq)
+        insert into tmp_student_lg_bq (student_id, student_code, school_year_id, math_lg, reading_lg, math_bq, reading_bq)
         select  sty.student_id
                 ,min(st.student_code)
+                , v_fcat_school_year_id
                 , min(case
                     when tmpT.ayp_subject_code is null then null
                     #when tmpT.ayp_subject_code = 'fcatMath' and tmpT.fcat_yr_grade_code in ('PK','KG','1','2','3','11','12','unassigned') then null
@@ -436,6 +439,37 @@ proc: begin
           and   sty.school_year_id = v_curr_school_year_id
         group by sty.student_id
         ; 
+        
+        
+        ### New - Update c_ayp_subject_student bottom quartile and lg flags from this data
+        update c_ayp_subject_student cass
+        join (
+              select  tmp.student_id, sub.ayp_subject_id, tmp.school_year_id, tmp.math_lg, tmp.math_bq
+              from    tmp_student_lg_bq tmp
+              cross join  c_ayp_subject sub on sub.ayp_Subject_code = 'fcatMath'
+            )dt
+            on   cass.student_id = dt.student_id
+            and  cass.ayp_subject_id = dt.ayp_subject_id
+            and  cass.school_year_id = dt.school_year_id
+            and  cass.score_record_flag = 1
+        set cass.lrn_gain_flag = case when dt.math_lg = 'Yes' then 1 else 0 end
+            , cass.bottom_quartile_flag = case when dt.math_bq = 'Yes' then 1 else 0 end
+        ;
+        
+        
+        update c_ayp_subject_student cass
+        join (
+              select  tmp.student_id, sub.ayp_subject_id, tmp.school_year_id, tmp.reading_lg, tmp.reading_bq
+              from    tmp_student_lg_bq tmp
+              cross join  c_ayp_subject sub on sub.ayp_Subject_code = 'fcatReading'
+            )dt
+            on   cass.student_id = dt.student_id
+            and  cass.ayp_subject_id = dt.ayp_subject_id
+            and  cass.school_year_id = dt.school_year_id
+            and  cass.score_record_flag = 1
+        set cass.lrn_gain_flag = case when dt.reading_lg = 'Yes' then 1 else 0 end
+            , cass.bottom_quartile_flag = case when dt.reading_bq = 'Yes' then 1 else 0 end
+        ;
     
     
         
