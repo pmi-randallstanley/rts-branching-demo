@@ -323,12 +323,18 @@ proc: begin
             ,ods.scale_score
             ,'n'
             ,ods.growth_score
-            ,case    ### This is different than all other HST Loads.  We are loading colors based on data in ods table for growth score
-                when ods.growth_flag = 'L' then 'red'
-                when ods.growth_flag = 'M' then 'yellow'
-                when ods.growth_flag = 'H' then 'green'
-                else null
-             end as ayp_score_color
+            ,case when ods.growth_score < -.5 then 'red'
+                when ods.growth_score between -.5 and -.000000001 then 'yellow'
+                when ods.growth_score between 0 and .5 then 'green'
+                when ods.growth_score > .5 then 'blue'
+                else 'null'
+            end  ayp_score_color
+            #,case    ### This is different than all other HST Loads.  We are loading colors based on data in ods table for growth score
+            #    when ods.growth_flag = 'L' then 'red'
+            #    when ods.growth_flag = 'M' then 'yellow'
+            #    when ods.growth_flag = 'H' then 'green'
+            #    else null
+            # end as ayp_score_color
             ,1234
             ,now()
         from    v_pmi_ods_nc_eoc_eog_ltdb as ods
