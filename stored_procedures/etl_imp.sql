@@ -734,6 +734,24 @@ SQL SECURITY INVOKER
         else 
             select 'No Grad Student Completed Projects File' as Uploader_Grad_Student_Comp_Projects;
         end if;    
+        
+        ##############################################
+        ## Run etl_grad_tracking_mn                 ##
+        ##############################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_mn_grad_tracking');
+    
+        if  @upload_id > 1 then 
+            select 'New MN Grad Tracking File' as Uploader_MN_Grad_Tracking, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_grad_tracking_mn()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_grad_tracking_mn();
+            set v_etl_rpt_flag = 1;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_grad_tracking_mn()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New MN Grad Tracking File' as Uploader_MN_Grad_Tracking, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No MN Grad Tracking File' as Uploader_MN_Grad_Tracking;
+        end if;    
 
 
         ##################################
