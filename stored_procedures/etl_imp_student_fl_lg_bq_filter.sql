@@ -189,6 +189,7 @@ proc: begin
                 and teststy.school_year_id      = cass.school_year_id
                 and cass.school_year_id         = v_fcat_school_year_id  
                 and cass.score_record_flag      = 1
+                and cass.alt_ayp_score is not null
         join    c_ayp_subject as cas
                 on  cas.ayp_subject_id          = cass.ayp_subject_id 
                 and cas.ayp_subject_code        in ('fcatMath','fcatReading')

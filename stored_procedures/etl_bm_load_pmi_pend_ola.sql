@@ -1,10 +1,4 @@
-/*
-$Rev: 7981 $ 
-$Author: randall.stanley $ 
-$Date: 2009-12-09 09:47:32 -0500 (Wed, 09 Dec 2009) $
-$HeadURL: http://atlanta-web.performancematters.com:8099/svn/pminternal/Data/Redwood/Core/stored_procedures/etl_bm_load_pmi_pend_ola.sql $
-$Id: etl_bm_load_pmi_pend_ola.sql 7981 2009-12-09 14:47:32Z randall.stanley $ 
- */
+
 
 drop procedure if exists etl_bm_load_pmi_pend_ola//
 
@@ -47,6 +41,19 @@ proc: begin
 
         # create remote (federated) tables to Pend data
 #        call etl_bm_load_pmi_pend_ola_tables();
+
+        
+        ## Make sure incoming data exists in sam_test_student
+        insert into sam_test_student (test_id, test_event_id, student_id, purge_responses_flag, last_user_id, create_timestamp)
+        select ods.pmi_test_id, ods.pmi_test_event_id, ods.pmi_student_id,0,1234,now()
+        from v_pmi_ods_scan_results_ola ods
+        left join sam_test_student sts
+            on    ods.pmi_test_id = sts.test_id
+            and   ods.pmi_test_event_id = sts.test_event_id
+            and   ods.pmi_student_id = sts.student_id
+        where sts.student_id is null
+        group by ods.pmi_test_id, ods.pmi_test_event_id, ods.pmi_student_id
+        ;
         
         
         insert  tmp_test_list (test_id)

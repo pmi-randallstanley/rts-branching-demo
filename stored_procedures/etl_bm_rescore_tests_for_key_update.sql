@@ -107,6 +107,8 @@ BEGIN
                 on ak.test_id = t.test_id 
         join    sam_question_type as qt 
                 on ak.question_type_id = qt.question_type_id
+        join    sam_student_response as sr   #Make sure we're rescoring a test that has responses
+                on t.test_id = sr.test_id
         left join    sam_scoring_method as sm 
                 on qt.scoring_method_id = sm.scoring_method_id
                 and sm.scoring_method_code = 'g'
