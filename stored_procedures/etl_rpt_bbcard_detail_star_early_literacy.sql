@@ -78,6 +78,12 @@ proc: begin
           `co` varchar(20) default null,
           `orf` varchar(20) default null,
           `lpr` varchar(20) default null,
+          `en` varchar(20) default null,
+          `pc` varchar(20) default null,
+          `sc` varchar(20) default null,
+          `vs` varchar(20) default null,
+          `cw` varchar(20) default null,
+          `ap` varchar(20) default null,
           `backfill_needed_flag` tinyint(1),
           primary key (`student_id`, `school_year_id`,`term_name_season`)
         ) engine=innodb default charset=latin1
@@ -133,7 +139,7 @@ proc: begin
 
         ## Tmp Stu Admin
         insert into tmp_stu_admin (student_id, school_year_id, term_name_season, ss, test_code, student_code, assessment_grade, date_taken_str
-        , gp, gr, gk, pa, ph, sa, vo, co, backfill_needed_flag)
+        , gp, gr, gk, pa, ph, sa, vo, co, lpr, en, pc, sc, vs, cw, ap, backfill_needed_flag)
         select  s.student_id
                 , tdc.school_year_id
                 , tdc.administration as term_name_season
@@ -150,8 +156,13 @@ proc: begin
                 , ods.SA
                 , ods.VO
                 , ods.CO
-               # , ods.ORF
-               # , ods.LPR
+                , ods.lpr
+                , ods.en
+                , ods.pc
+                , ods.sc
+                , ods.vs
+                , ods.cw
+                , ods.ap
                 , case when sty.school_year_id is null then 1 end as backfill_needed_flag
         from    v_pmi_ods_star_early_literacy ods
         join    tmp_date_conversion as tdc
@@ -179,8 +190,13 @@ proc: begin
                 , ods2.SA
                 , ods2.VO
                 , ods2.CO
-                #, ods2.ORF
-                #, ods2.LPR
+                , ods2.lpr
+                , ods2.en
+                , ods2.pc
+                , ods2.sc
+                , ods2.vs
+                , ods2.cw
+                , ods2.ap
                 , case when sty2.school_year_id is null then 1 end as backfill_needed_flag
         from    v_pmi_ods_star_early_literacy ods2
         join    tmp_date_conversion as tdc2
@@ -208,8 +224,13 @@ proc: begin
                 , ods3.SA
                 , ods3.VO
                 , ods3.CO
-                #, ods3.ORF
-                #, ods3.LPR
+                , ods3.lpr
+                , ods3.en
+                , ods3.pc
+                , ods3.sc
+                , ods3.vs
+                , ods3.cw
+                , ods3.ap
                 , case when sty3.school_year_id is null then 1 end as backfill_needed_flag
         from    v_pmi_ods_star_early_literacy ods3
         join    tmp_date_conversion as tdc3
@@ -230,8 +251,14 @@ proc: begin
                                 ,sa = values(sa)
                                 ,vo = values(vo)
                                 ,co = values(co)
-                                ,orf = values(orf)
+                                #,orf = values(orf)
                                 ,lpr = values(lpr)
+                                ,en = values(en)
+                                ,pc = values(pc)
+                                ,sc = values(sc)
+                                ,vs = values(vs)
+                                ,cw = values(cw)
+                                ,ap = values(ap)
                                 ,assessment_grade = values(assessment_grade)
         ;
 
@@ -280,8 +307,13 @@ proc: begin
                     when mi.bb_measure_item_code like 'starELStructAnal%' then 'SA'
                     when mi.bb_measure_item_code like 'starELVocab%' then 'VO'
                     when mi.bb_measure_item_code like 'starELComprehend%' then 'CO'
-                    #when mi.bb_measure_item_code like 'starELOralReadingFluencyF%' then 'ORF'
-                    #when mi.bb_measure_item_code like 'starELLikePercentileRank%' then 'LPR'
+                    when mi.bb_measure_item_code like 'starELLitPercentileRank%' then 'LPR'
+                    when mi.bb_measure_item_code like 'starELAlphabeticPrinciple%' then 'AP'
+                    when mi.bb_measure_item_code like 'starELConceptOfWord%' then 'CW'
+                    when mi.bb_measure_item_code like 'starELVisualDiscrim%' then 'VS'
+                    when mi.bb_measure_item_code like 'starELSentLevelComp%' then 'SC'
+                    when mi.bb_measure_item_code like 'starELParaLevelComp%' then 'PC'
+                    when mi.bb_measure_item_code like 'starELEarlyNumeracy%' then 'EN'
             else NULL
             end ods_column
         from pm_bbcard_measure_item mi
@@ -320,6 +352,13 @@ proc: begin
                         when x.ods_column = 'SA' then sa.SA
                         when x.ods_column = 'VO' then sa.VO
                         when x.ods_column = 'CO' then sa.CO
+                        when x.ods_column = 'LPR' then sa.LPR
+                        when x.ods_column = 'AP' then sa.AP
+                        when x.ods_column = 'CW' then sa.CW
+                        when x.ods_column = 'VS' then sa.VS
+                        when x.ods_column = 'SC' then sa.SC
+                        when x.ods_column = 'PC' then sa.PC
+                        when x.ods_column = 'EN' then sa.EN
                         
                     end as score
                     ,mi.score_sort_type_code

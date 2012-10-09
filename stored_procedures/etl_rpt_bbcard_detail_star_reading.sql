@@ -128,7 +128,7 @@ proc: begin
         set tdc.school_year_id = sy.school_year_id;
 
         ## Tmp Stu Admin
-        insert into tmp_stu_admin (student_id, school_year_id, term_name_season, ss, test_code, student_code, assessment_grade, date_taken_str, gp, ge, pr, nce, irl, lowerZPD, upperZPD, backfill_needed_flag)
+        insert into tmp_stu_admin (student_id, school_year_id, term_name_season, ss, test_code, student_code, assessment_grade, date_taken_str, gp, ge, pr, nce, irl, upperZPD, lowerZPD, backfill_needed_flag)
         select  s.student_id
                 , tdc.school_year_id
                 , tdc.administration as term_name_season
@@ -320,7 +320,7 @@ proc: begin
                     and   sa.term_name_season = x.term_name_season
              ) dt
         where dt.score is not null
-        on duplicate key update last_user_id = values(last_user_id), last_edit_timestamp = now()
+        on duplicate key update last_user_id = values(last_user_id), score = values(score), last_edit_timestamp = now()
         ;
 
         # Update Color
