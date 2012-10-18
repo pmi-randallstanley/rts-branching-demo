@@ -21,7 +21,8 @@ proc: begin
       `ayp_subject_id` int(10) NOT NULL,
       `school_year_id` smallint(4) NOT NULL,
       `ayp_score` decimal(9,3) NOT NULL,
-      `test_month_id` tinyint(2) NULL
+      `test_month_id` tinyint(2) NULL,
+      KEY `ind_tmp_best_score_dups` (`student_id`,`ayp_subject_id` ,`school_year_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=latin1
     ;
 
@@ -43,7 +44,7 @@ proc: begin
     select  student_id
         ,ayp_subject_id
         ,school_year_id
-        ,max(ayp_score)
+        ,max(coalesce(alt_ayp_score,ayp_score))  ### Needed to fix so it looks at alt score if that is there
     
     from    c_ayp_subject_student
     where   ayp_subject_id = p_ayp_subject_id
@@ -64,7 +65,8 @@ proc: begin
                         on      dups1.student_id = ss.student_id
                         and     dups1.ayp_subject_id = ss.ayp_subject_id
                         and     dups1.school_year_id = ss.school_year_id
-                        and     dups1.ayp_score = ss.ayp_score
+                        #and     dups1.ayp_score = ss.ayp_score
+                        and     dups1.ayp_score = coalesce(ss.alt_ayp_score,ss.ayp_score)
                 join    c_school_year_month  as sym
                         on      ss.month_id = sym.month_id
                 group by ss.student_id, ss.ayp_subject_id, ss.school_year_id

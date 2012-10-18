@@ -285,6 +285,9 @@ proc: begin
                     when m.bb_measure_code = 'nonVerbal' and mi.bb_measure_item_code = 'grdScorePctRank' then ods.grade_pct_rank_3 
                     when m.bb_measure_code = 'nonVerbal' and mi.bb_measure_item_code = 'grdScoreStanRank' then ods.grade_stanine_3 
                     when mi.bb_measure_item_code = 'cmpAgeStdScore' then ods.sas_comp1
+                    when mi.bb_measure_item_code = 'cmpAgeStdScore2' then ods.sas_comp2  #new
+                    when mi.bb_measure_item_code = 'cmpAgeStdScore3' then ods.sas_comp3  #new
+                    when mi.bb_measure_item_code = 'cmpAgeStdScore4' then ods.sas_comp4  #new
                     when mi.bb_measure_item_code = 'cmpUssScaleScore1' then ods.uss_comp1
                     when mi.bb_measure_item_code = 'cmpUssScaleScore2' then ods.uss_comp2
                     when mi.bb_measure_item_code = 'cmpUssScaleScore3' then ods.uss_comp3
@@ -292,11 +295,12 @@ proc: begin
                     when mi.bb_measure_item_code = 'cmpVqGradePct' then ods.grade_pct_rank_4
                     when mi.bb_measure_item_code = 'cmpVnGradePct' then ods.grade_pct_rank_5
                     when mi.bb_measure_item_code = 'cmpQnGradePct' then ods.grade_pct_rank_6
-                    when mi.bb_measure_item_code = 'cmpVqnGradePct' then ods.grade_pct_rank_7
+                    when mi.bb_measure_item_code = 'cmpVqnGradePct' then ods.grade_pct_rank_7 
                     when mi.bb_measure_item_code = 'cmpVqAgePct' then ods.age_pct_rank_4
                     when mi.bb_measure_item_code = 'cmpVnAgePct' then ods.age_pct_rank_5
                     when mi.bb_measure_item_code = 'cmpQnAgePct' then ods.age_pct_rank_6
-                    when mi.bb_measure_item_code = 'cmpVqnAgePct' then ods.age_pct_rank_6
+                    #when mi.bb_measure_item_code = 'cmpVqnAgePct' then ods.age_pct_rank_6
+                    when mi.bb_measure_item_code = 'cmpVqnAgePct' then ods.age_pct_rank_7 ## updated
                     when mi.bb_measure_item_code = 'cmpVqGrdStan' then ods.grade_stanine_4
                     when mi.bb_measure_item_code = 'cmpVnGrdStan' then ods.grade_stanine_5
                     when mi.bb_measure_item_code = 'cmpQnGrdStan' then ods.grade_stanine_6
@@ -328,7 +332,7 @@ proc: begin
             ,mi.bb_measure_item_id
             ,s.student_id
             ,tdc.school_year_id
-        having score is not null
+        having score is not null and score != ''   ### updated
         on duplicate key update score = values(score)
             ,score_type = values(score_type)
             ,score_color = values(score_color)

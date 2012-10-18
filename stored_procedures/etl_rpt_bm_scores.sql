@@ -103,7 +103,7 @@ BEGIN
            ,tmp1.curriculum_id
            ,tmp1.ayp_subject_id
            ,tmp1.ayp_strand_id
-           ,SUM(ROUND(er.rubric_value, 3))
+           ,coalesce(SUM(ROUND(er.rubric_value, 3)),0)
            ,SUM(ROUND(tmp1.rubric_total, 3))
            ,1234
         from    tmp_rpt_bm_scores as tmp1

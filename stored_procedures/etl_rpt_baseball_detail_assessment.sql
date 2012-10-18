@@ -44,6 +44,13 @@ proc: begin
         primary key  (`new_id`),
         unique key `uq_tmp_id_assign` (`base_code`)
     );
+    
+    # Get number of round digits for customer
+    select  coalesce(number_round_digits,0)
+    into    @number_round_digits
+    from    pmi_admin.pmi_client
+    where   client_id = @client_id
+    ;
 
 
     select  school_year_id
@@ -140,7 +147,7 @@ proc: begin
         ,0
         ,rts.student_id
         ,@curr_sy_id
-        ,round(rts.points_earned / rts.points_possible * 100, 0)
+        ,round(rts.points_earned / rts.points_possible * 100, @number_round_digits)
         ,clr.moniker
         ,1234
         ,now()
@@ -148,13 +155,13 @@ proc: begin
     from    tmp_bbcard_tests as tmp1
     join    rpt_test_scores as rts
             on      tmp1.test_id = rts.test_id
-    join    sam_test_mt_color_sequence_list as tmcsl
+    left join    sam_test_mt_color_sequence_list as tmcsl
             on      rts.test_id = tmcsl.test_id
-            and     round(rts.points_earned / rts.points_possible * 100, 0) between tmcsl.min_score and tmcsl.max_score
-    join    c_color_swatch_list as csl
+            and     round(rts.points_earned / rts.points_possible * 100, @number_round_digits) between tmcsl.min_score and tmcsl.max_score
+    left join    c_color_swatch_list as csl
             on      csl.swatch_id = @swatch_id
             and     csl.sort_order = tmcsl.color_sequence
-    join    pmi_color as clr
+    left join    pmi_color as clr
             on      csl.color_id = clr.color_id
     where   tmp1.purge_flag = 0
     group by tmp1.bb_group_id, tmp1.bb_measure_id, rts.student_id

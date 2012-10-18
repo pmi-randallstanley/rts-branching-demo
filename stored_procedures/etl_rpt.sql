@@ -180,6 +180,11 @@ BEGIN
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_isel_scores()', 'b';
         call etl_rpt_isel_scores();
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_isel_scores()', 'c';
+        
+        ##etl_rpt_grad_sub_stu_req_met##
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_grad_sub_stu_req_met()', 'b';
+        call etl_rpt_grad_sub_stu_req_met();
+        INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_grad_sub_stu_req_met()', 'c';
 
         ##etl_rpt_baseball_rebuild##
         INSERT tmp.etl_rpt_log (etl_rpt_id, client_id, action, time_code) SELECT @etl_rpt_id, @client_id, 'etl_rpt_baseball_rebuild()', 'b';
