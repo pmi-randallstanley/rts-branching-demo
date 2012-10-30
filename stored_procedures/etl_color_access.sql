@@ -1,3 +1,4 @@
+
 /*
 $Rev: 8471 $ 
 $Author: randall.stanley $ 
@@ -110,6 +111,28 @@ proc: begin
             order by dt.min_score, dt.color_id
             on duplicate key update last_user_id = values(last_user_id)
             ;
+        
+            ## New Color File means we should update bbcard (BBCv2 tables)
+            ## Only update proficiency level scores
+            update rpt_bbcard_detail_access as rpt
+            join c_student_year as sy
+                    on rpt.student_id = sy.student_id
+                    and rpt.school_year_id = sy.school_year_id
+            join c_grade_level as g
+                    on sy.grade_level_id = g.grade_level_id
+            join pm_bbcard_measure_item mi
+                    on  rpt.bb_group_id = mi.bb_group_id
+                    and rpt.bb_measure_id = mi.bb_measure_id
+                    and rpt.bb_measure_item_id = mi.bb_measure_item_id
+                    and mi.bb_measure_item_code like '%Prof%'
+            join pm_color_access as c
+                    on sy.school_year_id between c.begin_year and c.end_year
+                    and g.grade_sequence between c.begin_grade_sequence and c.end_grade_sequence
+                    and rpt.score between c.min_score and c.max_score
+            join pmi_color as pmic
+                  on c.color_id = pmic.color_id
+            set score_color = pmic.moniker
+            ;    
             
             #### Update imp_upload_log
             set @sql_string := concat('call ', @db_name_ods, '.imp_set_upload_file_status (\'pmi_ods_color_access\', \'P\', \'ETL Load Successful\')');
