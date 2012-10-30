@@ -1,3 +1,4 @@
+
 DROP TRIGGER IF EXISTS `sam_test_ua`//
 CREATE definer=`dbadmin`@`localhost` trigger `sam_test_ua` AFTER UPDATE ON `sam_test`
   FOR EACH ROW
@@ -17,8 +18,8 @@ BEGIN
     IF new.threshold_level > 0 and new.mastery_level > new.threshold_level THEN
     
         INSERT sam_test_mt_color_sequence_list (test_id, color_sequence, min_score, max_score, last_user_id, create_timestamp)
-        VALUES ( new.test_id, 1, 0, new.threshold_level - 1, new.last_user_id, now()),
-          ( new.test_id, 2, new.threshold_level, new.mastery_level - 1, new.last_user_id, now()),
+        VALUES ( new.test_id, 1, 0, new.threshold_level - .001, new.last_user_id, now()),
+          ( new.test_id, 2, new.threshold_level, new.mastery_level - .001, new.last_user_id, now()),
           ( new.test_id, 3, new.mastery_level, 100, new.last_user_id, now());
 
     END IF;         
