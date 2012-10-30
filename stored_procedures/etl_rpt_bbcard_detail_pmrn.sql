@@ -243,6 +243,24 @@ proc: begin
     having score is not null
     on duplicate key update score = values(score)
     ;
+    
+    # Update score color
+    update rpt_bbcard_detail_pmrn as rpt
+    join    c_student_year sy
+            on    rpt.student_id = sy.student_id
+            and   rpt.school_year_id = sy.school_year_id
+    join    c_grade_level gl
+            on    sy.grade_level_id = gl.grade_level_id
+    join    pm_bbcard_color_pmrn as cs
+            on    rpt.bb_group_id = cs.bb_group_id
+            and   rpt.bb_measure_id = cs.bb_measure_id
+            and   rpt.bb_measure_item_id = cs.bb_measure_item_id 
+            and   gl.grade_level_id = cs.grade_level_id
+            and   rpt.score between cs.min_score and cs.max_score
+    join    pmi_color as c
+            on    c.color_id = cs.color_id
+    set rpt.score_color = c.moniker
+    ;
 
     #################
     ## Update Log
