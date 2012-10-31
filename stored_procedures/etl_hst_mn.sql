@@ -301,7 +301,7 @@ BEGIN
                             
                         deallocate prepare sql_MN_MTAS_log;   
                     INSERT tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
-                    SELECT @etl_imp_id, @client_id, 'etl_hst_load_mn_mtas', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+                    SELECT @etl_imp_id, @client_id, 'etl_hst_load_mn_mtas()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
                 SELECT 'New MN MTAS' AS Uploader_MN_MTAS, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
             ELSE SELECT 'No New MN MTAS' AS Uploader_MN_MTAS;
         END IF;
@@ -336,7 +336,7 @@ BEGIN
                             
                         deallocate prepare sql_MN_MTAS_III_log;   
                     INSERT tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
-                    SELECT @etl_imp_id, @client_id, 'etl_hst_load_mn_mtas_iii', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+                    SELECT @etl_imp_id, @client_id, 'etl_hst_load_mn_mtas_iii()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
                 SELECT 'New MN MTAS III' AS Uploader_MN_MTAS_iii, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
             ELSE SELECT 'No New MN MTAS III' AS Uploader_MN_MTAS_iii;
         END IF;
@@ -370,7 +370,7 @@ BEGIN
                             
                         deallocate prepare sql_MN_AA_log;   
                     INSERT tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
-                    SELECT @etl_imp_id, @client_id, 'etl_hst_load_mn_aa', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+                    SELECT @etl_imp_id, @client_id, 'etl_hst_load_mn_aa()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
                 SELECT 'New MN AA' AS Uploader_MN_AA, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
             ELSE SELECT 'No New MN AA' AS Uploader_MN_AA;
         END IF;
