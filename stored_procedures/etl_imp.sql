@@ -691,6 +691,41 @@ SQL SECURITY INVOKER
             select 'No Color File - star' as Uploader_Color_Star;
         end if; 
         
+        
+        ###################################
+        ## Run etl_color_fountas_pinnell ##
+        ###################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_color_fountas_pinnell');
+    
+        if  @upload_id > 1 then 
+            select 'New Color File - Fountas and Pinnell' as Uploader_Color_Fountas_Pinnell, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_fountas_pinnell()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_color_fountas_pinnell();
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_fountas_pinnell()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Color File - Fountas and Pinnell' as Uploader_Color_Fountas_Pinnell, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No Color File - Fountas and Pinnell' as Uploader_Color_Fountas_Pinnell;
+        end if; 
+        
+        ###################################
+        ## Run etl_color_bbcard_pmrn ##
+        ###################################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_color_fair');
+    
+        if  @upload_id > 1 then 
+            select 'New Color File - FAIR' as Uploader_Color_FAIR, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_bbcard_pmrn()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+            call etl_color_bbcard_pmrn();
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_color_bbcard_pmrn()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Color File - FAIR' as Uploader_Color_FAIR, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else 
+            select 'No Color File - FAIR' as Uploader_Color_FAIR;
+        end if; 
+        
         ################################
         ## Run etl_imp_ayp_enrollment ##
         ################################
@@ -1562,6 +1597,7 @@ SQL SECURITY INVOKER
             select @etl_imp_id, @client_id, 'etl_rpt_baseball_detail_access()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
         
             call etl_rpt_baseball_detail_access();
+            call etl_rpt_bbcard_detail_access();
             set v_etl_baseball_rebuild_flag = 1;
         
             insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
@@ -1668,7 +1704,7 @@ SQL SECURITY INVOKER
             select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_star_math()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
             select 'New Star Math Scores' AS Star_Math_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
         else
-            select 'New Star Math Scores' AS Star_Math_Scores;
+            select 'No Star Math Scores' AS Star_Math_Scores;
         end if;  
         
         ##############################
@@ -1688,7 +1724,7 @@ SQL SECURITY INVOKER
             select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_star_reading()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
             select 'New Star Reading Scores' AS Star_Reading_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
         else
-            select 'New Star Reading Scores' AS Star_Reading_Scores;
+            select 'No Star Reading Scores' AS Star_Reading_Scores;
         end if;
         
         ##############################
@@ -1708,7 +1744,27 @@ SQL SECURITY INVOKER
             select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_star_early_literacy()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
             select 'New Star Early Lit Scores' AS Star_Early_Lit_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
         else
-            select 'New Star Early Lit Scores' AS Star_Early_Lit_Scores;
+            select 'No Star Early Lit Scores' AS Star_Early_Lit_Scores;
+        end if;
+        
+        ##############################
+        ## Fountas Pinnell
+        ##############################
+        call etl_imp_get_queued_id_by_table_name(@upload_id, 'pmi_ods_fountas_pinnell');
+        
+        if  @upload_id > 1 then
+            select 'New Fountas and Pinnell Scores' AS Fountas_Pinnell_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS Begin_Time;
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_fountas_pinnell()', 'b', v_etl_rpt_flag, v_etl_bm_build_flag;
+        
+            call etl_rpt_bbcard_detail_fountas_pinnell();
+            set v_etl_baseball_rebuild_flag = 1;
+        
+            insert tmp.etl_imp_log (etl_imp_id, client_id, action, time_code, etl_rpt_flag, etl_bm_build_flag)
+            select @etl_imp_id, @client_id, 'etl_rpt_bbcard_detail_fountas_pinnell()', 'c', v_etl_rpt_flag, v_etl_bm_build_flag;
+            select 'New Fountas and Pinnell Scores' AS Fountas_Pinnell_Scores, convert_tz(now(), 'UTC', 'US/Eastern') AS End_Time;
+        else
+            select 'No Fountas and Pinnell Scores' AS Fountas_Pinnell_Scores;
         end if;
 
         ##############################
