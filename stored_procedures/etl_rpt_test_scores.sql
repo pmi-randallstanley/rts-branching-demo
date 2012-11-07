@@ -149,8 +149,11 @@ BEGIN
         group by er.test_id, er.test_event_id, er.student_id
         ;
 
+
     end loop loop_cur_1;
 
+    optimize table rpt_test_scores;
+    
     drop table if exists `tmp_tests`;
     drop table if exists `tmp_rpt_test_scores`;
 
